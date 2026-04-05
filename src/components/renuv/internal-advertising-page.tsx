@@ -7,6 +7,7 @@ import {
   renuvAdvertisingContracts,
   type AdvertisingSnapshot,
 } from '@/lib/renuv-advertising';
+import { KpiLabel } from './metric-tooltip';
 
 type Tone = 'positive' | 'negative' | 'neutral' | 'warning' | 'info' | 'critical' | 'active' | 'paused' | 'stale' | 'healthy' | 'degraded';
 type TrendDirection = 'up' | 'down' | 'flat';
@@ -14,8 +15,8 @@ type TrendDirection = 'up' | 'down' | 'flat';
 export function RenuvInternalAdvertisingPage({ snapshot, brand }: { snapshot: AdvertisingSnapshot; brand?: string }) {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(94,168,255,0.18),transparent_32%),linear-gradient(180deg,#eef5fb_0%,#f7f9fc_58%,#edf3f9_100%)] text-[var(--ink-950)]">
-      <div className="mx-auto max-w-[1680px] px-6 py-8 md:px-8 lg:px-10">
-        <section className="mb-6 overflow-hidden rounded-[34px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] px-6 py-6 shadow-[0_24px_80px_rgba(19,44,74,0.10)] backdrop-blur md:px-8 md:py-8">
+      <div className="mx-auto max-w-[1680px] px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:px-10">
+        <section className="mb-6 overflow-hidden rounded-[34px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] p-4 shadow-[0_24px_80px_rgba(19,44,74,0.10)] backdrop-blur sm:px-6 sm:py-6 md:px-8 md:py-8">
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,420px)] xl:items-start">
             <div className="space-y-5">
               <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--ink-700)]">
@@ -78,11 +79,11 @@ export function RenuvInternalAdvertisingPage({ snapshot, brand }: { snapshot: Ad
           </div>
         </section>
 
-        <section className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+        <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
           {snapshot.kpis.map((kpi) => (
             <article key={kpi.key} className="rounded-[24px] border border-[var(--line-soft)] bg-white/90 p-5 shadow-[0_18px_40px_rgba(19,44,74,0.06)]">
               <div className="flex items-start justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">{kpi.label}</p>
+                <KpiLabel>{kpi.label}</KpiLabel>
                 <TrendPill trend={kpi.trend}>{kpi.delta}</TrendPill>
               </div>
               <p className="mt-4 text-2xl font-semibold tracking-[-0.04em] text-[var(--ink-950)] md:text-4xl">{kpi.value}</p>

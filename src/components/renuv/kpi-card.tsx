@@ -1,5 +1,6 @@
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MetricTooltip } from './metric-tooltip';
 
 interface KpiCardProps {
   label: string;
@@ -36,7 +37,10 @@ export function KpiCard({
         {/* Label and trend badge */}
         <div className="mb-3 flex items-start justify-between gap-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">
-            {label}
+            <span className="inline-flex items-center gap-0">
+              {label}
+              <MetricTooltip label={label} />
+            </span>
           </p>
           {delta && (
             <span

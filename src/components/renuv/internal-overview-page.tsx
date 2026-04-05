@@ -7,6 +7,7 @@ import { AlertSummaryWidget } from './alert-summary-widget';
 import { DateRangePicker } from './date-range-picker';
 import { OverviewChart } from './overview-chart';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
+import { KpiLabel } from './metric-tooltip';
 
 function findKpi(kpis: RenuvOverviewSnapshot['kpis'], key: string) {
   return kpis.find((k) => k.key === key);
@@ -29,8 +30,8 @@ export function RenuvInternalOverviewPage({ snapshot, brand }: { snapshot: Renuv
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(94,168,255,0.18),transparent_32%),linear-gradient(180deg,#eef5fb_0%,#f7f9fc_58%,#edf3f9_100%)] text-[var(--ink-950)]">
-      <div className="mx-auto max-w-[1680px] px-6 py-8 md:px-8 lg:px-10">
-        <section className="mb-6 overflow-hidden rounded-[34px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] px-6 py-6 shadow-[0_24px_80px_rgba(19,44,74,0.10)] backdrop-blur md:px-8 md:py-8">
+      <div className="mx-auto max-w-[1680px] px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:px-10">
+        <section className="mb-6 overflow-hidden rounded-[34px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] p-4 shadow-[0_24px_80px_rgba(19,44,74,0.10)] backdrop-blur sm:px-6 sm:py-6 md:px-8 md:py-8">
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,420px)] xl:items-start">
             <div className="space-y-5">
               <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--ink-700)]">
@@ -117,11 +118,11 @@ export function RenuvInternalOverviewPage({ snapshot, brand }: { snapshot: Renuv
           <AlertSummaryWidget brand={brand} />
         </div>
 
-        <section className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+        <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
           {snapshot.kpis.map((kpi) => (
             <article key={kpi.key} className="rounded-[24px] border border-[var(--line-soft)] bg-white/90 p-5 shadow-[0_18px_40px_rgba(19,44,74,0.06)]">
               <div className="flex items-start justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">{kpi.label}</p>
+                <KpiLabel>{kpi.label}</KpiLabel>
                 <TrendPill trend={kpi.trend}>{kpi.delta}</TrendPill>
               </div>
               <p className="mt-4 text-2xl font-semibold tracking-[-0.04em] text-[var(--ink-950)] md:text-4xl">{kpi.value}</p>
@@ -381,7 +382,7 @@ function MiniSummaryCard({ title, value, detail, icon }: { title: string; value:
   return (
     <div className="rounded-[22px] border border-[var(--line-soft)] bg-white p-4 shadow-[0_16px_32px_rgba(19,44,74,0.06)]">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">{title}</p>
+        <KpiLabel>{title}</KpiLabel>
         {icon ? <span className="text-[var(--blue-700)]">{icon}</span> : null}
       </div>
       <p className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[var(--ink-950)]">{value}</p>
@@ -393,7 +394,7 @@ function MiniSummaryCard({ title, value, detail, icon }: { title: string; value:
 function MiniMetric({ label, value, large = false }: { label: string; value: string; large?: boolean }) {
   return (
     <div className="rounded-[18px] border border-[var(--line-soft)] bg-[var(--panel-muted)] p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-600)]">{label}</p>
+      <KpiLabel className="text-[11px] tracking-[0.16em]">{label}</KpiLabel>
       <p className={cn('mt-2 font-semibold tracking-[-0.03em] text-[var(--ink-950)]', large ? 'text-2xl' : 'text-base')}>{value}</p>
     </div>
   );

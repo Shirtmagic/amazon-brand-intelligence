@@ -63,3 +63,4 @@ export { StatusBadge, HealthBadge, RiskBadge, FreshnessBadge } from './status-ba
 export { DataTable, type Column } from './data-table';
 export { SectionHeader } from './section-header';
 export { Skeleton, KpiCardSkeleton, TableSkeleton, ChartSkeleton, LoadingSpinner } from './loading-skeleton';
+export { MetricTooltip, KpiLabel, getMetricHelp } from './metric-tooltip';

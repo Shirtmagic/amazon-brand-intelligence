@@ -3,12 +3,13 @@ import { TrendingUp, TrendingDown, ArrowLeft, Search, CheckCircle2 } from 'lucid
 import { cn } from '@/lib/utils';
 import type { SearchSnapshot, SearchKpi, SearchTermPerformance } from '@/lib/renuv-search';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
+import { KpiLabel } from './metric-tooltip';
 
 export function SearchDetail({ snapshot, brand }: { snapshot: SearchSnapshot; brand?: string }) {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(94,168,255,0.18),transparent_32%),linear-gradient(180deg,#eef5fb_0%,#f7f9fc_58%,#edf3f9_100%)] text-[var(--ink-950)]">
-      <div className="mx-auto max-w-[1680px] px-6 py-8 md:px-8 lg:px-10">
-        <section className="mb-6 overflow-hidden rounded-[34px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] px-6 py-6 shadow-[0_24px_80px_rgba(19,44,74,0.10)] backdrop-blur md:px-8 md:py-8">
+      <div className="mx-auto max-w-[1680px] px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:px-10">
+        <section className="mb-6 overflow-hidden rounded-[34px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] p-4 shadow-[0_24px_80px_rgba(19,44,74,0.10)] backdrop-blur sm:px-6 sm:py-6 md:px-8 md:py-8">
           <div className="space-y-5">
             <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--ink-700)]">
               <Link href={clientRoute(brand)} className="mc-btn mc-btn-ghost !min-h-0 !px-4 !py-2 !text-[11px]">
@@ -108,7 +109,7 @@ function KpiCard({ kpi }: { kpi: SearchKpi }) {
   return (
     <article className="rounded-[24px] border border-[var(--line-soft)] bg-white p-5 shadow-[0_18px_40px_rgba(19,44,74,0.06)]">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">{kpi.label}</p>
+        <KpiLabel>{kpi.label}</KpiLabel>
         <span className={cn('flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]', trendConfig.color, trendConfig.bg)}>
           {trendConfig.icon}
           {kpi.delta}

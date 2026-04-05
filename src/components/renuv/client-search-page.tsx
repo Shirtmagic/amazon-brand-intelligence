@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowUpRight, TrendingUp, TrendingDown, Search, Target, Ligh
 import { cn } from '@/lib/utils';
 import type { ClientSearchSnapshot, SearchKpi, TopSearchTerm, SearchOpportunity } from '@/lib/renuv-client-search';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
+import { KpiLabel } from './metric-tooltip';
 
 export function RenuvClientSearchPage({ snapshot, brand }: { snapshot: ClientSearchSnapshot; brand?: string }) {
   return (
@@ -136,7 +137,7 @@ function KpiCard({ kpi }: { kpi: SearchKpi }) {
   return (
     <article className="rounded-[24px] border border-[var(--line-soft)] bg-white p-5 shadow-[0_18px_40px_rgba(19,44,74,0.06)]">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">{kpi.label}</p>
+        <KpiLabel>{kpi.label}</KpiLabel>
         <span className={cn('flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]', trendConfig.color, trendConfig.bg)}>
           {trendConfig.icon}
           {kpi.delta}

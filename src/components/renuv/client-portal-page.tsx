@@ -9,6 +9,7 @@ import type { ClientPortalSnapshot, ClientKpi } from '@/lib/renuv-client-portal'
 import { ReviewExportControls } from './review-export-controls';
 import type { ExportFormat } from '@/lib/renuv-export';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
+import { KpiLabel } from './metric-tooltip';
 
 export interface RenuvClientPortalPageProps {
   snapshot: ClientPortalSnapshot;
@@ -194,7 +195,7 @@ function KpiCard({ kpi }: { kpi: ClientKpi }) {
   return (
     <article className="rounded-[24px] border border-[var(--line-soft)] bg-white p-5 shadow-[0_18px_40px_rgba(19,44,74,0.06)]">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">{kpi.label}</p>
+        <KpiLabel>{kpi.label}</KpiLabel>
         <span className={cn('flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]', trendConfig.color, trendConfig.bg)}>
           {trendConfig.icon}
           {kpi.delta}
