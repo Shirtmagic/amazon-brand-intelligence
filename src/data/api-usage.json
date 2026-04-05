@@ -1,0 +1,31 @@
+{
+  "providers": [
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "requests": 642,
+      "tokens": 185432,
+      "cost": 92.14,
+      "quota": 0.62,
+      "sparkline": [62, 48, 70, 55, 80, 76, 64]
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "requests": 188,
+      "tokens": 52340,
+      "cost": 47.90,
+      "quota": 0.34,
+      "sparkline": [22, 30, 28, 35, 31, 24, 29]
+    },
+    {
+      "id": "tavily",
+      "name": "Tavily",
+      "requests": 410,
+      "tokens": 0,
+      "cost": 12.30,
+      "quota": 0.44,
+      "sparkline": [14, 18, 25, 22, 27, 30, 29]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+[
+  {
+    "id": "backlog",
+    "title": "Backlog",
+    "cards": [
+      {"id": "task-brand-locker", "title": "Attach Dropbox links to Brand Locker", "assignee": "Gus", "status": "pending"},
+      {"id": "task-api-feed", "title": "Spec API usage feed", "assignee": "Gateway", "status": "blocked"}
+    ]
+  },
+  {
+    "id": "in-progress",
+    "title": "In Progress",
+    "cards": [
+      {"id": "task-nextjs", "title": "Scaffold Next.js app", "assignee": "Mission Control", "status": "building"},
+      {"id": "task-palettes", "title": "Capture I Heart Nature palette", "assignee": "Gus", "status": "building"}
+    ]
+  },
+  {
+    "id": "blocked",
+    "title": "Blocked",
+    "cards": [
+      {"id": "task-claude-roster", "title": "Confirm Claude variants", "assignee": "Todd", "status": "waiting"}
+    ]
+  },
+  {
+    "id": "done",
+    "title": "Done",
+    "cards": [
+      {"id": "task-wireframe", "title": "Wireframe sign-off", "assignee": "Gus", "status": "complete"},
+      {"id": "task-component-palette", "title": "Component palette baselines", "assignee": "Gus", "status": "complete"}
+    ]
+  }
+]

@@ -1,0 +1,425 @@
+@import "tailwindcss";
+
+:root {
+  --bg-1: #eef5fb;
+  --bg-2: #f7f9fc;
+  --panel-muted: #f4f8fc;
+  --navy-900: #16324a;
+  --navy-800: #1f3e5f;
+  --blue-700: #2d74d7;
+  --blue-500: #5ea8ff;
+  --ink-950: #0f2433;
+  --ink-900: #173248;
+  --ink-800: #345066;
+  --ink-700: #5b7084;
+  --ink-600: #7a8da0;
+  --line-soft: rgba(15, 36, 51, 0.08);
+  --font-sans: "Inter", "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  color: var(--ink-950);
+  font-family: var(--font-sans);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mc-btn {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-align: center;
+  transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+  box-shadow: 0 10px 24px rgba(19, 44, 74, 0.08);
+}
+
+.mc-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.mc-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(94, 168, 255, 0.22), 0 10px 24px rgba(19, 44, 74, 0.12);
+}
+
+.mc-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  box-shadow: none;
+}
+
+.mc-btn-primary {
+  border-color: rgba(15, 36, 51, 0.12);
+  background: linear-gradient(180deg, var(--navy-800) 0%, var(--navy-900) 100%);
+  color: white;
+}
+
+.mc-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #244b72 0%, #16324a 100%);
+}
+
+.mc-btn-secondary {
+  border-color: rgba(22, 50, 74, 0.16);
+  background: #edf4fb;
+  color: var(--ink-950);
+}
+
+.mc-btn-secondary:hover:not(:disabled) {
+  background: #e4eef9;
+}
+
+.mc-btn-danger {
+  border-color: #efbfab;
+  background: #fbe8de;
+  color: #8f4317;
+}
+
+.mc-btn-danger:hover:not(:disabled) {
+  background: #f6dfd2;
+}
+
+.mc-btn-ghost {
+  border-color: rgba(15, 36, 51, 0.1);
+  background: white;
+  color: var(--ink-900);
+}
+
+.mc-btn-ghost:hover:not(:disabled) {
+  background: #f9fbfd;
+}
+
+::selection {
+  background: rgba(94, 168, 255, 0.28);
+}
+
+@keyframes mission-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.55;
+  }
+}
+
+.mission-pulse {
+  animation: mission-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ========================================
+   PRINT STYLES - Review/Export Mode
+   Clean PDF capture with proper page breaks
+   ======================================== */
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  /* Show print-only elements */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Hide interactive UI elements */
+  .print-hide,
+  .mc-btn,
+  nav,
+  header:not(.print-preserve),
+  footer:not(.print-preserve),
+  [data-print-hide],
+  button:not(.print-preserve),
+  .review-export-controls {
+    display: none !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: letter;
+    margin: 1.5cm 2cm;
+  }
+
+  /* Reset backgrounds and optimize layout */
+  * {
+    box-shadow: none !important;
+    background-image: none !important;
+  }
+
+  html,
+  body {
+    background: white !important;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: auto;
+  }
+
+  main {
+    background: white !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Preserve essential backgrounds for branding */
+  [data-print-preserve-bg],
+  .print-preserve-bg {
+    background-color: inherit !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Typography optimization */
+  body,
+  p,
+  span,
+  div,
+  li {
+    color: #000 !important;
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+
+  h1 {
+    color: #1a1a1a !important;
+    font-size: 24pt;
+    page-break-after: avoid;
+    margin-top: 0;
+  }
+
+  h2 {
+    color: #1a1a1a !important;
+    font-size: 18pt;
+    page-break-after: avoid;
+    margin-top: 16pt;
+  }
+
+  h3 {
+    color: #1a1a1a !important;
+    font-size: 14pt;
+    page-break-after: avoid;
+    margin-top: 12pt;
+  }
+
+  h4,
+  h5,
+  h6 {
+    color: #333 !important;
+    font-size: 12pt;
+    page-break-after: avoid;
+  }
+
+  /* Page break control */
+  article,
+  section,
+  .card,
+  .kpi-card,
+  [data-print-keep-together] {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Chart and metric containers */
+  .chart-container,
+  .chart-wrapper,
+  .metric-block {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 12pt;
+    max-height: 400px;
+    overflow: visible;
+  }
+
+  /* Table optimization */
+  table {
+    border-collapse: collapse;
+    border: 1px solid #ddd !important;
+    page-break-inside: auto;
+    width: 100%;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  th,
+  td {
+    border: 1px solid #ddd !important;
+    padding: 8pt;
+    text-align: left;
+  }
+
+  th {
+    background-color: #f5f5f5 !important;
+    font-weight: 600;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Lists */
+  ul,
+  ol {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin: 8pt 0;
+    padding-left: 20pt;
+  }
+
+  li {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 4pt;
+  }
+
+  /* Borders visibility */
+  .bordered,
+  [class*="border"] {
+    border-color: #ddd !important;
+  }
+
+  /* Links */
+  a {
+    color: #2d74d7 !important;
+    text-decoration: underline;
+  }
+
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #666;
+  }
+
+  a[href^="#"]:after,
+  a[href^="javascript:"]:after {
+    content: "";
+  }
+
+  /* Review mode specific */
+  .review-mode-active main {
+    padding-top: 60pt !important;
+  }
+
+  /* Ensure clean page breaks for long sections */
+  .long-section {
+    page-break-inside: auto;
+  }
+
+  /* Status badges and indicators */
+  .badge,
+  [class*="badge"] {
+    border: 1px solid #ddd !important;
+    padding: 2pt 6pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Spacing optimization */
+  section {
+    margin-bottom: 16pt;
+  }
+
+  /* Prevent orphaned headers */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Keep content with headers */
+  h1 + *,
+  h2 + *,
+  h3 + * {
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+
+  /* Image optimization */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Code blocks */
+  pre,
+  code {
+    border: 1px solid #ddd;
+    background-color: #f5f5f5 !important;
+    padding: 4pt;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Ensure visibility of important UI elements */
+  .print-preserve {
+    display: block !important;
+  }
+
+  /* Remove transforms and animations */
+  * {
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Review mode screen styles (non-print) */
+.review-mode-active {
+  background: white !important;
+}
+
+.review-mode-active main {
+  background: white !important;
+  min-height: 100vh;
+}
+
+.review-mode-active .print-hide {
+  opacity: 0.3;
+  pointer-events: none;
+}

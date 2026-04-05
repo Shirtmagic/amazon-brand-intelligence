@@ -1,0 +1,233 @@
+{
+  "source": "mission-control/comment-guidance.json",
+  "lastUpdatedAt": "2026-03-18T16:55:13.731Z",
+  "items": [
+    {
+      "id": "guide-1773852913731-5e22bc1d",
+      "agentId": "comment-agent",
+      "approvalId": "apr-fb-1245556414349105-34062426566738156",
+      "rule": "That's great. I'm so happy you got rid of the rotten egg smell. Use them once a month and it won't return.",
+      "createdAt": "2026-03-18T16:55:13.731Z",
+      "lastAppliedAt": "2026-03-18T16:55:13.731Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-1773852257455-64ac30e8",
+      "agentId": "comment-agent",
+      "approvalId": "apr-fb-1245556414349105-1353318696600390",
+      "rule": "I am sorry I am not sure the question. Please send us the qustion and I am happy to answer.",
+      "createdAt": "2026-03-18T16:44:17.455Z",
+      "lastAppliedAt": "2026-03-18T16:44:17.455Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-1773692646739-690bbbd9",
+      "agentId": "comment-agent",
+      "approvalId": "apr-fb-933632305541519-586505244231514",
+      "rule": "Keep the tone loose, natural, and low-pressure.",
+      "createdAt": "2026-03-16T20:24:06.738Z",
+      "lastAppliedAt": "2026-03-16T20:24:06.738Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-1773692646739-229e0b75",
+      "agentId": "comment-agent",
+      "approvalId": "apr-fb-933632305541519-586505244231514",
+      "rule": "Skip salesy closers or support-funnel language.",
+      "createdAt": "2026-03-16T20:24:06.738Z",
+      "lastAppliedAt": "2026-03-16T20:24:06.738Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-1773692646739-b4868ba5",
+      "agentId": "comment-agent",
+      "approvalId": "apr-fb-933632305541519-586505244231514",
+      "rule": "Keep Facebook replies concise and easy to scan.",
+      "createdAt": "2026-03-16T20:24:06.738Z",
+      "lastAppliedAt": "2026-03-16T20:24:06.738Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-1773683298925-53de9e33",
+      "agentId": "comment-agent",
+      "approvalId": "apr-fb-956742613230488-1273072783945811",
+      "rule": "Start with how you agree that they could clean the fabric softener dispenser at the top of the agitator but then they could also use our product to clean the internal workings of their washing machine where you cannot see, like the pipes, filters, and pumps.",
+      "createdAt": "2026-03-16T17:48:18.925Z",
+      "lastAppliedAt": "2026-03-16T17:48:18.925Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-1773487475599-a601d1c9",
+      "agentId": "comment-agent",
+      "approvalId": "apr-fb-947602514144498-1647404202611552",
+      "rule": "Point purchase questions to https://renuv.com/products/coffee-machine-cleaner-descaler.",
+      "createdAt": "2026-03-14T11:24:35.599Z",
+      "lastAppliedAt": "2026-03-14T11:24:35.599Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-1773487475599-4653b7de",
+      "agentId": "comment-agent",
+      "approvalId": "apr-fb-947602514144498-1647404202611552",
+      "rule": "Use the website product page instead of Amazon for this reply.",
+      "createdAt": "2026-03-14T11:24:35.599Z",
+      "lastAppliedAt": "2026-03-14T11:24:35.599Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-1773487475599-95935f79",
+      "agentId": "comment-agent",
+      "approvalId": "apr-fb-947602514144498-1647404202611552",
+      "rule": "We alwasy want to point to our own website.",
+      "createdAt": "2026-03-14T11:24:35.599Z",
+      "lastAppliedAt": "2026-03-14T11:24:35.599Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-1773486359222-e9deca21",
+      "agentId": "comment-agent",
+      "approvalId": "apr-fb-949648257273257-2173039363154752",
+      "rule": "Enjoy your fresh cup of coffee.",
+      "createdAt": "2026-03-14T11:05:59.221Z",
+      "lastAppliedAt": "2026-03-14T11:05:59.221Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-1773486359222-aae958bf",
+      "agentId": "comment-agent",
+      "approvalId": "apr-fb-949648257273257-2173039363154752",
+      "rule": "Thank you for the comment.",
+      "createdAt": "2026-03-14T11:05:59.221Z",
+      "lastAppliedAt": "2026-03-14T11:05:59.221Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-1773268254212",
+      "agentId": "comment-agent",
+      "approvalId": "apr-comment-machine-cleaner",
+      "rule": "This is a cleaner tablet and can be used in any coffee machine.",
+      "createdAt": "2026-03-11T22:30:54.212Z",
+      "lastAppliedAt": "2026-03-11T22:30:54.212Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-1773268254212__2",
+      "agentId": "comment-agent",
+      "approvalId": "apr-comment-machine-cleaner",
+      "rule": "remove the last sentance.",
+      "createdAt": "2026-03-11T22:30:54.212Z",
+      "lastAppliedAt": "2026-03-11T22:30:54.212Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-short-direct",
+      "agentId": "comment-agent",
+      "approvalId": "apr-comment-machine-cleaner",
+      "rule": "Lead with the answer before extra context.",
+      "createdAt": "2026-03-11T22:22:00.000Z",
+      "lastAppliedAt": "2026-03-11T22:22:00.000Z",
+      "timesApplied": 1
+    },
+    {
+      "id": "guide-no-hype",
+      "agentId": "comment-agent",
+      "approvalId": "apr-comment-machine-cleaner",
+      "rule": "Avoid hypey claims and keep the reply grounded.",
+      "createdAt": "2026-03-11T22:22:00.000Z",
+      "lastAppliedAt": "2026-03-16T20:24:06.738Z",
+      "timesApplied": 2
+    }
+  ],
+  "history": [
+    {
+      "id": "feedback-1773852913731-ca2a85aa",
+      "approvalId": "apr-fb-1245556414349105-34062426566738156",
+      "feedback": "That's great. I'm so happy you got rid of the rotten egg smell. Use them once a month and it won't return.",
+      "operatorDraft": "That's great. I'm so happy you got rid of the rotten egg smell. Use them once a month and it won't return.",
+      "revisedResponse": "That's great. I'm so happy you got rid of the rotten egg smell. Use them once a month and it won't return.",
+      "createdAt": "2026-03-18T16:55:13.731Z",
+      "guidanceIds": [
+        "guide-1773852913731-5e22bc1d"
+      ]
+    },
+    {
+      "id": "feedback-1773852257456-dadc2d0b",
+      "approvalId": "apr-fb-1245556414349105-1353318696600390",
+      "feedback": "I am sorry I am not sure the question.  Please send us the qustion and I am happy to answer",
+      "operatorDraft": "I am sorry I am not sure the question.  Please send us the qustion and I am happy to answer",
+      "revisedResponse": "I am sorry I am not sure the question.  Please send us the qustion and I am happy to answer",
+      "createdAt": "2026-03-18T16:44:17.455Z",
+      "guidanceIds": [
+        "guide-1773852257455-64ac30e8"
+      ]
+    },
+    {
+      "id": "feedback-1773692646740-235c39de",
+      "approvalId": "apr-fb-933632305541519-586505244231514",
+      "feedback": "answer the older-machine question first, keep it short, less salesy",
+      "revisedResponse": "Yes — it is meant for machines that can run a normal cleaning or descale cycle.",
+      "createdAt": "2026-03-16T20:24:06.738Z",
+      "guidanceIds": [
+        "guide-1773692646739-b4868ba5",
+        "guide-no-hype",
+        "guide-1773692646739-229e0b75",
+        "guide-1773692646739-690bbbd9"
+      ]
+    },
+    {
+      "id": "feedback-1773683298927-300eccfd",
+      "approvalId": "apr-fb-956742613230488-1273072783945811",
+      "feedback": "Start with how you agree that they could clean the fabric softener dispenser at the top of the agitator but then they could also use our product to clean the internal workings of their washing machine where you cannot see, like the pipes, filters, and pumps.",
+      "revisedResponse": "Yes — it is meant for machines that can run a normal cleaning or descale cycle.",
+      "createdAt": "2026-03-16T17:48:18.925Z",
+      "guidanceIds": [
+        "guide-1773683298925-53de9e33"
+      ]
+    },
+    {
+      "id": "feedback-1773487475600-b1c8693a",
+      "approvalId": "apr-fb-947602514144498-1647404202611552",
+      "feedback": "We alwasy want to point to our own website.  You should had pointed them to https://renuv.com/products/coffee-machine-cleaner-descaler",
+      "revisedResponse": "Just to add to the thread — you can get it on our website here: https://renuv.com/products/coffee-machine-cleaner-descaler.",
+      "createdAt": "2026-03-14T11:24:35.599Z",
+      "guidanceIds": [
+        "guide-1773487475599-95935f79",
+        "guide-1773487475599-4653b7de",
+        "guide-1773487475599-a601d1c9"
+      ]
+    },
+    {
+      "id": "feedback-1773486359223-361b1507",
+      "approvalId": "apr-fb-949648257273257-2173039363154752",
+      "feedback": "Thank you for the comment.  Enjoy your fresh cup of coffee.",
+      "revisedResponse": "Reply draft not generated yet.",
+      "createdAt": "2026-03-14T11:05:59.221Z",
+      "guidanceIds": [
+        "guide-1773486359222-aae958bf",
+        "guide-1773486359222-e9deca21"
+      ]
+    },
+    {
+      "id": "feedback-1773268254212",
+      "approvalId": "apr-comment-machine-cleaner",
+      "feedback": "remove the last sentance.  This is a cleaner tablet and can be used in any coffee machine",
+      "revisedResponse": "Yes — it can help with buildup on many older Keurig-style machines too, and bitter taste is often a sign it’s time for a cleaning cycle. If you want, I can point you to the quick directions so you can check your exact machine.",
+      "createdAt": "2026-03-11T22:30:54.212Z",
+      "guidanceIds": [
+        "guide-1773268254212",
+        "guide-1773268254212__2"
+      ]
+    },
+    {
+      "id": "feedback-seed-1",
+      "approvalId": "apr-comment-machine-cleaner",
+      "feedback": "Answer the older-machine question first, keep it shorter, and stay helpful without sounding salesy.",
+      "revisedResponse": "Yes — it can help with buildup on many older Keurig-style machines too, and bitter taste is often a sign it’s time for a cleaning cycle. If you want, I can point you to the quick directions so you can check your exact machine.",
+      "createdAt": "2026-03-11T22:22:00.000Z",
+      "guidanceIds": [
+        "guide-short-direct",
+        "guide-no-hype"
+      ]
+    }
+  ]
+}

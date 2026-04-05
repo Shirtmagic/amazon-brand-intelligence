@@ -1,0 +1,51 @@
+{
+  "source": "mission-control/runtime.json",
+  "lastSyncedAt": "2026-03-18T17:15:47.995Z",
+  "agents": [
+    {
+      "id": "gus",
+      "status": "busy",
+      "currentTask": "Tightening the executive weekly report before approval",
+      "focus": "Executive communication quality and operator visibility",
+      "lastHeartbeat": "7m ago",
+      "pendingTasks": 3,
+      "pendingApprovals": 1
+    },
+    {
+      "id": "comment-agent",
+      "status": "idle",
+      "currentTask": "Executing approved work: Reply to Facebook comment · Video Holder - Copy",
+      "focus": "Posting approved Facebook reply",
+      "lastHeartbeat": "just now",
+      "pendingTasks": 2,
+      "pendingApprovals": 0
+    },
+    {
+      "id": "cleo",
+      "status": "busy",
+      "currentTask": "Renuv hook scoring and static concept pipeline",
+      "focus": "Competitor review, winning hook analysis, static concepts",
+      "lastHeartbeat": "6m ago",
+      "pendingTasks": 4,
+      "pendingApprovals": 1
+    },
+    {
+      "id": "gentry",
+      "status": "online",
+      "currentTask": "Available for personal task dispatch",
+      "focus": "Telegram-based personal assistant tasks",
+      "lastHeartbeat": "just now",
+      "pendingTasks": 0,
+      "pendingApprovals": 0
+    },
+    {
+      "id": "sage",
+      "status": "online",
+      "currentTask": "Renuv storefront SEO access verified; preparing collection and product optimization work",
+      "focus": "GA4 + Shopify-backed SEO execution and Keyword Planner browser-first research",
+      "lastHeartbeat": "just now",
+      "pendingTasks": 2,
+      "pendingApprovals": 0
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+[
+  {"id":"gpt-5.1-codex","label":"GPT-5.1 Codex","provider":"OpenAI","default":true},
+  {"id":"gpt-4.1","label":"GPT-4.1","provider":"OpenAI"},
+  {"id":"claude-3-opus","label":"Claude 3 Opus","provider":"Anthropic"},
+  {"id":"claude-3.5-sonnet","label":"Claude 3.5 Sonnet","provider":"Anthropic"},
+  {"id":"claude-3-haiku","label":"Claude 3 Haiku","provider":"Anthropic"},
+  {"id":"gemini-2.0-pro","label":"Gemini 2.0 Pro","provider":"Google"},
+  {"id":"tavily-search-1.4","label":"Tavily Search 1.4","provider":"Tavily"}
+]

@@ -1,0 +1,364 @@
+import Link from 'next/link';
+import type { ReactNode } from 'react';
+import { ArrowLeft, ArrowUpRight, Database, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { brandRoot, internalRoute } from '@/lib/renuv-routes';
+import {
+  renuvAdvertisingContracts,
+  type AdvertisingSnapshot,
+} from '@/lib/renuv-advertising';
+
+type Tone = 'positive' | 'negative' | 'neutral' | 'warning' | 'info' | 'critical' | 'active' | 'paused' | 'stale' | 'healthy' | 'degraded';
+type TrendDirection = 'up' | 'down' | 'flat';
+
+export function RenuvInternalAdvertisingPage({ snapshot, brand }: { snapshot: AdvertisingSnapshot; brand?: string }) {
+  return (
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(94,168,255,0.18),transparent_32%),linear-gradient(180deg,#eef5fb_0%,#f7f9fc_58%,#edf3f9_100%)] text-[var(--ink-950)]">
+      <div className="mx-auto max-w-[1680px] px-6 py-8 md:px-8 lg:px-10">
+        <section className="mb-6 overflow-hidden rounded-[34px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] px-6 py-6 shadow-[0_24px_80px_rgba(19,44,74,0.10)] backdrop-blur md:px-8 md:py-8">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,420px)] xl:items-start">
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--ink-700)]">
+                <Link href={internalRoute(brand)} className="mc-btn mc-btn-ghost !min-h-0 !px-4 !py-2 !text-[11px]">
+                  <ArrowLeft size={14} /> Back to Renuv overview
+                </Link>
+                <Badge tone="navy">Internal workspace</Badge>
+                <Badge tone="blue">Advertising</Badge>
+                <Badge tone="soft">{snapshot.periodLabel}</Badge>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[var(--blue-700)]">Amazon intelligence</p>
+                <h1 className="mt-3 max-w-4xl text-2xl font-semibold tracking-[-0.04em] text-[var(--ink-950)] md:text-4xl lg:text-6xl">
+                  Advertising · {snapshot.brand}
+                </h1>
+                <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--ink-700)] md:text-lg">
+                  Campaign performance, spend efficiency, and ROAS analysis.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2 text-xs text-[var(--ink-600)]">
+                <Tag>Internal-only</Tag>
+                <Tag>Read-only campaign review</Tag>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link href={internalRoute(brand, "traffic-conversion")} className="mc-btn mc-btn-primary">
+                  Cross-check traffic & conversion <ArrowUpRight size={15} />
+                </Link>
+                <Link href={internalRoute(brand, "asins")} className="mc-btn mc-btn-secondary">
+                  Cross-check ASIN performance <ArrowUpRight size={15} />
+                </Link>
+                <Link href={internalRoute(brand, "retail-health")} className="mc-btn mc-btn-secondary">
+                  Cross-check retail health <ArrowUpRight size={15} />
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+              <MiniSummaryCard
+                title="Primary source family"
+                value="Advertising performance"
+                detail="Campaign, search-term, efficiency-rollup, and freshness data for operational review."
+                icon={<Database size={18} />}
+              />
+              <MiniSummaryCard
+                title="Trust posture"
+                value="Internal-ready with labels"
+                detail="Every block keeps its source/view label visible so claims remain auditable."
+                icon={<ShieldCheck size={18} />}
+              />
+              <MiniSummaryCard
+                title="Operator focus"
+                value="Non-brand efficiency"
+                detail="The key watch item is acquisition spend quality, not a broad account failure."
+                icon={<TriangleAlert size={18} />}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+          {snapshot.kpis.map((kpi) => (
+            <article key={kpi.key} className="rounded-[24px] border border-[var(--line-soft)] bg-white/90 p-5 shadow-[0_18px_40px_rgba(19,44,74,0.06)]">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">{kpi.label}</p>
+                <TrendPill trend={kpi.trend}>{kpi.delta}</TrendPill>
+              </div>
+              <p className="mt-4 text-2xl font-semibold tracking-[-0.04em] text-[var(--ink-950)] md:text-4xl">{kpi.value}</p>
+              <p className="mt-3 text-sm leading-6 text-[var(--ink-700)]">{kpi.note}</p>
+              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--blue-700)]">{kpi.sourceView}</p>
+            </article>
+          ))}
+        </section>
+
+        <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <Panel>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <SectionHeading eyebrow="Campaign view" title="Campaign performance block" />
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--ink-700)]">
+                  Core internal operating table for campaign-level spend, attributed-sales, efficiency, and conversion review.
+                </p>
+              </div>
+              <Link href={internalRoute(brand)} className="mc-btn mc-btn-secondary">
+                Overview context <ArrowUpRight size={15} />
+              </Link>
+            </div>
+            <DataTable
+              columns={['Campaign', 'Channel', 'Objective', 'Spend', 'Attributed sales', 'ROAS', 'TACOS impact', 'CVR', 'Status']}
+              rows={snapshot.performance.map((row) => [
+                row.campaign,
+                row.channel,
+                row.objective,
+                row.spend,
+                row.attributedSales,
+                row.roas,
+                row.tacosImpact,
+                row.cvr,
+                <ToneBadge key={`${row.campaign}-status`} tone={row.status}>{formatToneLabel(row.status)}</ToneBadge>
+              ])}
+              footer={snapshot.performance[0]?.sourceView}
+            />
+          </Panel>
+
+          <Panel>
+            <SectionHeading eyebrow="Efficiency posture" title="Spend and efficiency review" />
+            <div className="mt-5 rounded-[24px] border border-[rgba(94,168,255,0.14)] bg-[linear-gradient(135deg,rgba(94,168,255,0.12),rgba(255,255,255,0.96))] p-5">
+              <h3 className="text-xl font-semibold tracking-[-0.03em] text-[var(--ink-950)]">{snapshot.efficiency.headline}</h3>
+              <p className="mt-3 text-sm leading-6 text-[var(--ink-700)]">{snapshot.efficiency.summary}</p>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {snapshot.efficiency.signals.map((signal) => (
+                <div key={signal.label} className="rounded-[20px] border border-[var(--line-soft)] bg-white p-4 shadow-[0_12px_30px_rgba(19,44,74,0.05)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--ink-900)]">{signal.label}</p>
+                    <ToneBadge tone={signal.tone}>{signal.value}</ToneBadge>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-[var(--ink-700)]">{signal.detail}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--blue-700)]">{snapshot.efficiency.sourceView}</p>
+          </Panel>
+        </section>
+
+        <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <Panel>
+            <SectionHeading eyebrow="Source health" title="Advertising freshness + trust framing" />
+            <div className="mt-5 space-y-3">
+              {snapshot.freshness.map((item) => (
+                <div key={item.source} className="rounded-[22px] border border-[var(--line-soft)] bg-[var(--panel-muted)] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--ink-950)]">{item.source}</p>
+                      <p className="mt-1 text-xs text-[var(--ink-600)]">{item.updatedAt}</p>
+                    </div>
+                    <ToneBadge tone={item.tone}>{item.lag}</ToneBadge>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-[var(--ink-700)]">{item.readiness}</p>
+                  <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--blue-700)]">{item.sourceView}</p>
+                </div>
+              ))}
+            </div>
+          </Panel>
+
+          <Panel>
+            <SectionHeading eyebrow="Channel mix" title="Spend / sales share by ad lane" />
+            <DataTable
+              columns={['Channel', 'Spend share', 'Sales share', 'ACOS', 'Role']}
+              rows={snapshot.spendMix.map((row) => [row.channel, row.spendShare, row.salesShare, row.acos, row.role])}
+              footer={snapshot.spendMix[0]?.sourceView}
+            />
+          </Panel>
+        </section>
+
+        <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <Panel>
+            <SectionHeading eyebrow="Search-term layer" title="Paid search diagnostics" />
+            <DataTable
+              columns={['Query', 'Campaign bias', 'Spend', 'Sales', 'ACOS', 'Quality read']}
+              rows={snapshot.searchTerms.map((row) => [
+                row.query,
+                row.campaignBias,
+                row.spend,
+                row.sales,
+                row.acos,
+                row.qualityRead
+              ])}
+              footer={snapshot.searchTerms[0]?.sourceView}
+            />
+          </Panel>
+
+          <Panel>
+            <SectionHeading eyebrow="Risk flags" title="Internal advertising diagnostics" />
+            <div className="mt-5 space-y-3">
+              {snapshot.diagnostics.map((item) => (
+                <div key={item.title} className="rounded-[22px] border border-[var(--line-soft)] bg-white p-4 shadow-[0_12px_30px_rgba(19,44,74,0.05)]">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-semibold text-[var(--ink-950)]">{item.title}</p>
+                    <ToneBadge tone={item.severity}>{formatToneLabel(item.severity)}</ToneBadge>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-[var(--ink-700)]">{item.detail}</p>
+                  <div className="mt-4 rounded-[18px] border border-[var(--line-soft)] bg-[var(--panel-muted)] p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-600)]">Action bias</p>
+                    <p className="mt-2 text-sm leading-6 text-[var(--ink-800)]">{item.actionBias}</p>
+                  </div>
+                  <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--blue-700)]">{item.sourceView}</p>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </section>
+
+        <section className="rounded-[28px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] p-5 shadow-[0_24px_70px_rgba(19,44,74,0.08)] backdrop-blur md:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <SectionHeading eyebrow="Data sources" title="Advertising reporting views" />
+              <p className="mt-3 max-w-4xl text-sm leading-6 text-[var(--ink-700)]">
+                Each section is backed by a named reporting view. Source labels are visible per block for auditability.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href={internalRoute(brand)} className="mc-btn mc-btn-ghost">
+                Overview <ArrowUpRight size={15} />
+              </Link>
+              <Link href={internalRoute(brand, "asins")} className="mc-btn mc-btn-secondary">
+                ASIN performance <ArrowUpRight size={15} />
+              </Link>
+              <Link href={internalRoute(brand, "retail-health")} className="mc-btn mc-btn-secondary">
+                Retail health <ArrowUpRight size={15} />
+              </Link>
+              <Link href={brandRoot(brand)} className="mc-btn mc-btn-primary">
+                Mission Control <ArrowUpRight size={15} />
+              </Link>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {Object.entries(renuvAdvertisingContracts).map(([key, source]) => (
+              <div key={key} className="rounded-[20px] border border-[var(--line-soft)] bg-[var(--panel-muted)] p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">{key}</p>
+                <p className="mt-2 text-sm font-semibold leading-6 text-[var(--ink-900)]">{source}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function Panel({ children }: { children: ReactNode }) {
+  return <section className="rounded-[28px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] p-5 shadow-[0_24px_70px_rgba(19,44,74,0.08)] backdrop-blur md:p-6">{children}</section>;
+}
+
+function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--blue-700)]">{eyebrow}</p>
+      <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[var(--ink-950)]">{title}</h2>
+    </div>
+  );
+}
+
+function Tag({ children }: { children: ReactNode }) {
+  return <span className="rounded-full border border-[var(--line-soft)] bg-[var(--panel-muted)] px-3 py-1">{children}</span>;
+}
+
+function Badge({ tone, children }: { tone: 'navy' | 'blue' | 'soft'; children: ReactNode }) {
+  const styles = {
+    navy: 'bg-[var(--navy-900)] text-white',
+    blue: 'bg-[var(--blue-700)] text-white',
+    soft: 'border border-[var(--line-soft)] bg-white text-[var(--ink-700)]'
+  } as const;
+
+  return <span className={cn('inline-flex rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em]', styles[tone])}>{children}</span>;
+}
+
+function TrendPill({ trend, children }: { trend: TrendDirection; children: ReactNode }) {
+  const styles = {
+    up: 'bg-[#e7f4ee] text-[#2d8a56]',
+    down: 'bg-[#fff0e8] text-[#b15d27]',
+    flat: 'bg-[#eef2f6] text-[#627587]'
+  } as const;
+
+  return <span className={cn('rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]', styles[trend])}>{children}</span>;
+}
+
+function ToneBadge({ tone, children }: { tone: Tone; children: ReactNode }) {
+  const styles: Record<Tone, string> = {
+    positive: 'bg-[#e7f4ee] text-[#2d8a56]',
+    negative: 'bg-[#fff0e8] text-[#b15d27]',
+    neutral: 'bg-[#eef2f6] text-[#627587]',
+    warning: 'bg-[#fff8e8] text-[#876a18]',
+    info: 'bg-[#e8f4ff] text-[#1a5490]',
+    critical: 'bg-[#16324a] text-white',
+    active: 'bg-[#e7f4ee] text-[#2d8a56]',
+    paused: 'bg-[#eef2f6] text-[#627587]',
+    stale: 'bg-[#fff0e8] text-[#b15d27]',
+    healthy: 'bg-[#e7f4ee] text-[#2d8a56]',
+    degraded: 'bg-[#fff8e8] text-[#876a18]'
+  };
+
+  return <span className={cn('rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]', styles[tone])}>{children}</span>;
+}
+
+function MiniSummaryCard({ title, value, detail, icon }: { title: string; value: string; detail: string; icon?: ReactNode }) {
+  return (
+    <div className="rounded-[22px] border border-[var(--line-soft)] bg-white p-4 shadow-[0_16px_32px_rgba(19,44,74,0.06)]">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">{title}</p>
+        {icon ? <span className="text-[var(--blue-700)]">{icon}</span> : null}
+      </div>
+      <p className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[var(--ink-950)]">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-[var(--ink-700)]">{detail}</p>
+    </div>
+  );
+}
+
+function DataTable({ columns, rows, footer }: { columns: string[]; rows: Array<Array<ReactNode>>; footer?: string }) {
+  return (
+    <div className="mt-5 overflow-hidden rounded-[24px] border border-[var(--line-soft)] bg-white shadow-[0_18px_42px_rgba(19,44,74,0.05)]">
+      <div className="hidden md:block overflow-x-auto">
+        <table className="min-w-full border-collapse text-left">
+          <thead className="bg-[var(--panel-muted)]">
+            <tr>
+              {columns.map((column) => (
+                <th key={column} className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">{column}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr key={index} className="border-t border-[var(--line-soft)] align-top">
+                {row.map((cell, cellIndex) => (
+                  <td key={cellIndex} className="px-4 py-4 text-sm leading-6 text-[var(--ink-800)]">{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="md:hidden divide-y divide-[var(--line-soft)]">
+        {rows.map((row, index) => (
+          <div key={index} className="space-y-2 p-4">
+            {row.map((cell, cellIndex) => (
+              <div key={cellIndex} className="flex items-start justify-between gap-3">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-600)]">{columns[cellIndex]}</span>
+                <span className="text-right text-sm leading-6 text-[var(--ink-800)]">{cell}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      {footer ? <p className="border-t border-[var(--line-soft)] bg-[var(--panel-muted)] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--blue-700)]">{footer}</p> : null}
+    </div>
+  );
+}
+
+function formatToneLabel(tone: Tone) {
+  if (tone === 'positive') return 'Healthy';
+  if (tone === 'warning') return 'Watch';
+  if (tone === 'critical') return 'Critical';
+  return 'Stable';
+}

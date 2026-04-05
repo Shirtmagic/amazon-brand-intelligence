@@ -1,0 +1,26 @@
+[
+  {
+    "name": "BeeFriendly",
+    "slug": "beefriendly",
+    "dropboxPath": "BeeFriendly",
+    "dropboxLink": "https://www.dropbox.com/scl/fo/jjiqrjoha0eztcryxsn0c/AEXD5iOYg0_79wqEBfURiCA?dl=0",
+    "owner": "Todd",
+    "status": "ready"
+  },
+  {
+    "name": "I Heart Nature",
+    "slug": "iheart_nature",
+    "dropboxPath": "IHeartNature",
+    "dropboxLink": "https://www.dropbox.com/scl/fo/z93kwc5z9cfxv7jza73wc/AC92v9EZfBuDjbUVFHGEf7w?dl=0",
+    "owner": "Todd",
+    "status": "ready"
+  },
+  {
+    "name": "Renuv",
+    "slug": "renuv",
+    "dropboxPath": "Apps/Gus Bot/Renuv",
+    "dropboxLink": "https://www.dropbox.com/scl/fo/sample-renuv",
+    "owner": "Mike",
+    "status": "ready"
+  }
+]

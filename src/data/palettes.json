@@ -1,0 +1,35 @@
+[
+  {
+    "brand": "BeeFriendly",
+    "updatedAt": "2026-03-03T21:00:00Z",
+    "source": "component-palette.md",
+    "swatches": [
+      {"name": "Petal", "hex": "#F6C1B8"},
+      {"name": "Honey", "hex": "#F4A48A"},
+      {"name": "Ribbon", "hex": "#FCEFEA"},
+      {"name": "Cocoa", "hex": "#2F1C18"}
+    ]
+  },
+  {
+    "brand": "I Heart Nature",
+    "updatedAt": "2026-03-04T04:45:00Z",
+    "source": "https://iheart-nature.com",
+    "swatches": [
+      {"name": "Evergreen", "hex": "#108474"},
+      {"name": "Herba", "hex": "#449879"},
+      {"name": "Sunstone", "hex": "#E16F27"},
+      {"name": "Canvas", "hex": "#F5F1EA"}
+    ]
+  },
+  {
+    "brand": "Renuv",
+    "updatedAt": "2026-03-02T19:10:00Z",
+    "source": "component-palette.md",
+    "swatches": [
+      {"name": "Pine", "hex": "#1B5E3C"},
+      {"name": "Mint", "hex": "#6FCF97"},
+      {"name": "Bone", "hex": "#F6F8F4"},
+      {"name": "Slate", "hex": "#1F2822"}
+    ]
+  }
+]

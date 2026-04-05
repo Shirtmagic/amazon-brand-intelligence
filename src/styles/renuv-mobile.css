@@ -1,0 +1,189 @@
+/**
+ * Renuv Amazon Intelligence Mobile Optimizations
+ * Mobile-first responsive styles for client portal
+ */
+
+/* Touch-friendly interactive elements */
+@media (max-width: 768px) {
+  .mc-btn {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Improve tap targets */
+  button, a {
+    min-height: 44px;
+  }
+
+  /* Reduce excessive padding on mobile */
+  .mobile-compact {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* KPI Card mobile stacking */
+@media (max-width: 640px) {
+  .kpi-card {
+    min-height: auto;
+  }
+}
+
+/* Chart overflow handling */
+@media (max-width: 768px) {
+  .chart-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+
+  .chart-inner {
+    min-width: 600px; /* Prevent chart from compressing too much */
+  }
+
+  /* Horizontal scroll indicator */
+  .chart-container::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 2rem;
+    background: linear-gradient(to left, rgba(255,255,255,0.8), transparent);
+    pointer-events: none;
+  }
+}
+
+/* Commentary and card stacking */
+@media (max-width: 1024px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .two-col-desktop {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1024px) {
+  .two-col-tablet {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Review mode mobile adjustments */
+@media (max-width: 768px) {
+  [data-review-mode="presentation"] {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  [data-review-mode="presentation"] .mc-btn {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* Print mode mobile sanity pass */
+@media print {
+  /* Ensure mobile-optimized elements print correctly */
+  .mobile-compact {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .chart-container {
+    overflow: visible;
+    max-width: 100%;
+  }
+
+  .chart-inner {
+    min-width: auto;
+  }
+
+  /* Stack everything for print */
+  .card-grid,
+  .two-col-desktop,
+  .two-col-tablet {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Sticky header on mobile scroll */
+@media (max-width: 768px) {
+  .mobile-sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 0.75rem;
+    margin: -0.75rem -0.75rem 0.75rem;
+    border-bottom: 1px solid var(--line-soft);
+  }
+}
+
+/* Safe area insets for mobile devices */
+@supports (padding: env(safe-area-inset-left)) {
+  @media (max-width: 768px) {
+    .mobile-safe-inset {
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+    }
+  }
+}
+
+/* Improved readability on small screens */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+  }
+
+  /* Reduce excessive spacing */
+  .section-gap {
+    margin-bottom: 1rem;
+  }
+
+  .card-gap {
+    gap: 0.75rem;
+  }
+}
+
+/* Horizontal scroll with better UX */
+.scroll-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(94, 168, 255, 0.3) transparent;
+}
+
+.scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(94, 168, 255, 0.3);
+  border-radius: 3px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(94, 168, 255, 0.5);
+}

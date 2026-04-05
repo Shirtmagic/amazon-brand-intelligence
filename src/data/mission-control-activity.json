@@ -1,0 +1,170 @@
+[
+  {
+    "id": "act-approval-1773854147995-516e7386",
+    "time": "13:15",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Video Holder - Copy"
+  },
+  {
+    "id": "act-approval-1773854072495-e6124593",
+    "time": "13:14",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Clean It Before It’s Too Late!"
+  },
+  {
+    "id": "act-approval-1773853665072-94a66713",
+    "time": "13:07",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Bitter coffee in the morning"
+  },
+  {
+    "id": "act-approval-1773853520542-66493e88",
+    "time": "13:05",
+    "actor": "Mission Control",
+    "summary": "Todd Rejected comment reply and sent the work back out of the queue. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Andy Video"
+  },
+  {
+    "id": "act-approval-1773853476840-778e2f27",
+    "time": "13:04",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Britta Washing Machine Video"
+  },
+  {
+    "id": "act-approval-1773853314826-e3c850fc",
+    "time": "13:01",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Britta Washing Machine Video"
+  },
+  {
+    "id": "act-approval-1773853128540-cd67fafb",
+    "time": "12:58",
+    "actor": "Mission Control",
+    "summary": "Todd Rejected comment reply and sent the work back out of the queue. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Britta Washing Machine Video"
+  },
+  {
+    "id": "act-approval-1773852968483-8d851374",
+    "time": "12:56",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Britta Washing Machine Video"
+  },
+  {
+    "id": "act-comment-revision-1773852913731-9a9b1de6",
+    "time": "12:55",
+    "actor": "Mission Control",
+    "summary": "Sammy updated the reply that will post inside Mission Control using the latest operator steer.",
+    "object": "Facebook commenter · Reply to Facebook comment · Britta Washing Machine Video"
+  },
+  {
+    "id": "act-approval-1773852727255-50c9d61f",
+    "time": "12:52",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Britta Washing Machine Video"
+  },
+  {
+    "id": "act-approval-1773852541596-7e2d72fa",
+    "time": "12:49",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Sharron Video"
+  },
+  {
+    "id": "act-approval-1773852430098-2fa62fee",
+    "time": "12:47",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Andy Video"
+  },
+  {
+    "id": "act-approval-1773852316834-f3a84a86",
+    "time": "12:45",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Britta Washing Machine Video"
+  },
+  {
+    "id": "act-comment-revision-1773852257457-edbf8c83",
+    "time": "12:44",
+    "actor": "Mission Control",
+    "summary": "Sammy updated the reply that will post inside Mission Control using the latest operator steer.",
+    "object": "Facebook commenter · Reply to Facebook comment · Britta Washing Machine Video"
+  },
+  {
+    "id": "act-comment-hide-1773834049571-a9d74aca",
+    "time": "07:40",
+    "actor": "Mission Control",
+    "summary": "Todd hid a Facebook comment. Sammy now sees the moderation action in the dashboard history.",
+    "object": "Facebook commenter · Reply to Facebook comment · Britta Washing Machine Video"
+  },
+  {
+    "id": "act-approval-1773795103381-67ec8876",
+    "time": "20:51",
+    "actor": "Mission Control",
+    "summary": "Todd Rejected comment reply and sent the work back out of the queue. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Sharron Video"
+  },
+  {
+    "id": "act-approval-1773749055333-8718d017",
+    "time": "08:04",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Britta Washing Machine Video"
+  },
+  {
+    "id": "act-approval-1773748652923-ac89fd57",
+    "time": "07:57",
+    "actor": "Mission Control",
+    "summary": "Todd Rejected comment reply and sent the work back out of the queue. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Sharron Video"
+  },
+  {
+    "id": "act-approval-1773692651902-e074b830",
+    "time": "16:24",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Advantage+ shopping Kristen"
+  },
+  {
+    "id": "act-comment-revision-1773692646740-aa5f39f1",
+    "time": "16:24",
+    "actor": "Mission Control",
+    "summary": "Sammy updated the reply that will post inside Mission Control using the latest operator steer.",
+    "object": "Facebook commenter · Reply to Facebook comment · Advantage+ shopping Kristen"
+  },
+  {
+    "id": "act-approval-1773692403289-0bccfb81",
+    "time": "16:20",
+    "actor": "Mission Control",
+    "summary": "Todd Approved the exact Facebook reply shown in Mission Control and cleared it for posting. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Gemma"
+  },
+  {
+    "id": "act-comment-revision-1773683298927-e630eadc",
+    "time": "13:48",
+    "actor": "Mission Control",
+    "summary": "Sammy updated the reply that will post inside Mission Control using the latest operator steer.",
+    "object": "Facebook commenter · Reply to Facebook comment · Gemma"
+  },
+  {
+    "id": "act-approval-1773532128292-20d2a85a",
+    "time": "19:48",
+    "actor": "Mission Control",
+    "summary": "Todd Rejected comment reply and sent the work back out of the queue. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Gemma"
+  },
+  {
+    "id": "act-approval-1773532106824-c31c8663",
+    "time": "19:48",
+    "actor": "Mission Control",
+    "summary": "Todd Rejected comment reply and sent the work back out of the queue. Sammy now owns the next step.",
+    "object": "Approval queue · Reply to Facebook comment · Advantage+ shopping Kristen"
+  }
+]

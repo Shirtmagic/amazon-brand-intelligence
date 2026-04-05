@@ -1,0 +1,57 @@
+[
+  {
+    "id": "gus-main",
+    "name": "Gus",
+    "role": "Main Ops",
+    "channel": "Telegram",
+    "modelId": "gpt-5.1-codex",
+    "status": "online",
+    "uptime": "6h 12m",
+    "tasks": ["BeeFriendly Ads", "Mission Control Build"],
+    "priority": "high"
+  },
+  {
+    "id": "mission-control",
+    "name": "Mission Control",
+    "role": "Dashboard Builder",
+    "channel": "Local",
+    "modelId": "gpt-5.1-codex",
+    "status": "building",
+    "uptime": "1h 04m",
+    "tasks": ["Prototype Plan", "Next.js Scaffold"],
+    "priority": "medium"
+  },
+  {
+    "id": "gentry",
+    "name": "Gentry",
+    "role": "Renuv Messaging",
+    "channel": "Telegram",
+    "modelId": "claude-3.5-sonnet",
+    "status": "idle",
+    "uptime": "--",
+    "tasks": ["Inbox Watch"],
+    "priority": "low"
+  },
+  {
+    "id": "radar",
+    "name": "Radar",
+    "role": "Data Connections & Warehouse",
+    "channel": "Internal",
+    "modelId": "gpt-5.4",
+    "status": "online",
+    "uptime": "--",
+    "tasks": ["Connector Health", "Warehouse Plumbing"],
+    "priority": "high"
+  },
+  {
+    "id": "art",
+    "name": "Art",
+    "role": "Programming & App Build",
+    "channel": "Internal",
+    "modelId": "gpt-5.4",
+    "status": "online",
+    "uptime": "--",
+    "tasks": ["Internal Workspace Build", "App Implementation"],
+    "priority": "high"
+  }
+]

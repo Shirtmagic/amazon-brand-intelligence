@@ -1,0 +1,111 @@
+[
+  {
+    "id": "gus",
+    "name": "Gus",
+    "role": "COO / Agent Operator",
+    "laneId": "command",
+    "lane": "Command",
+    "provider": "Anthropic",
+    "model": "claude-opus-4-6",
+    "reportsTo": "Todd",
+    "responsibilities": [
+      "Cross-agent coordination",
+      "Priority setting",
+      "Quality control",
+      "Executive escalation"
+    ]
+  },
+  {
+    "id": "comment-agent",
+    "name": "Sammy",
+    "role": "Facebook Comment Agent",
+    "laneId": "creative",
+    "lane": "Creative & Content",
+    "provider": "OpenAI Codex",
+    "model": "gpt-5.4",
+    "reportsTo": "Gus",
+    "responsibilities": [
+      "Comment triage",
+      "Reply drafting",
+      "Fast revision handling",
+      "Feedback pattern capture"
+    ]
+  },
+  {
+    "id": "cleo",
+    "name": "Cleo",
+    "role": "Facebook Creative Director",
+    "laneId": "creative",
+    "lane": "Creative & Content",
+    "provider": "Anthropic",
+    "model": "claude-opus-4-6",
+    "reportsTo": "Gus",
+    "responsibilities": [
+      "Hook research",
+      "Creative scoring",
+      "Static concept drafts"
+    ]
+  },
+  {
+    "id": "gentry",
+    "name": "Gentry",
+    "role": "Personal Assistant",
+    "laneId": "command",
+    "lane": "Command",
+    "provider": "OpenAI Codex",
+    "model": "gpt-5.4",
+    "reportsTo": "Todd",
+    "responsibilities": [
+      "Personal task execution",
+      "Telegram communication",
+      "Ad-hoc research"
+    ]
+  },
+  {
+    "id": "sage",
+    "name": "Neil",
+    "role": "Shopify SEO",
+    "laneId": "storefront",
+    "lane": "Storefront & Organic",
+    "provider": "OpenAI Codex",
+    "model": "gpt-5.4",
+    "reportsTo": "Gus",
+    "responsibilities": [
+      "Collection SEO",
+      "Product-page improvements",
+      "Organic growth"
+    ]
+  },
+  {
+    "id": "radar",
+    "name": "Radar",
+    "role": "Data Connections & Warehouse",
+    "laneId": "systems",
+    "lane": "Intelligence / Systems",
+    "provider": "OpenAI Codex",
+    "model": "gpt-5.4",
+    "reportsTo": "Gus",
+    "responsibilities": [
+      "Connector health",
+      "Openbridge and BigQuery plumbing",
+      "Warehouse freshness monitoring",
+      "Landed schema inspection"
+    ]
+  },
+  {
+    "id": "art",
+    "name": "Art",
+    "role": "Programming & App Build",
+    "laneId": "systems",
+    "lane": "Intelligence / Systems",
+    "provider": "OpenAI Codex",
+    "model": "gpt-5.4",
+    "reportsTo": "Gus",
+    "responsibilities": [
+      "App architecture",
+      "Implementation execution",
+      "Internal workspace build",
+      "Client portal build"
+    ]
+  }
+]

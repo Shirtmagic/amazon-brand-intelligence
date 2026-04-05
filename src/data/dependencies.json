@@ -1,0 +1,5 @@
+[
+  {"id": "dep-dropbox-links", "title": "Dropbox links for BeeFriendly + I Heart Nature", "owner": "Todd", "status": "waiting"},
+  {"id": "dep-api-feed", "title": "Live API usage feed spec", "owner": "Gateway", "status": "waiting"},
+  {"id": "dep-claude", "title": "Confirm Claude variant list", "owner": "Todd", "status": "waiting"}
+]
