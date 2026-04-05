@@ -6,17 +6,41 @@ import { BigQuery } from '@google-cloud/bigquery';
 // Singleton client instance
 let bigQueryClient: BigQuery | null = null;
 
+function parseCredentialsJson(raw: string) {
+  const candidates = [raw.trim()];
+
+  try {
+    const decoded = Buffer.from(raw.trim(), 'base64').toString('utf8');
+    if (decoded && decoded !== raw) {
+      candidates.push(decoded.trim());
+    }
+  } catch {
+    // ignore base64 decode failure
+  }
+
+  let lastError: unknown;
+  for (const candidate of candidates) {
+    try {
+      const credentials = JSON.parse(candidate);
+      if (credentials.private_key) {
+        credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
+      }
+      return credentials;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw new Error(`Unable to parse BIGQUERY_CREDENTIALS_JSON: ${String(lastError)}`);
+}
+
 function getBigQueryConfig(): ConstructorParameters<typeof BigQuery>[0] {
   const projectId = process.env.BIGQUERY_PROJECT_ID || 'renuv-amazon-data-warehouse';
   const credentialsJson = process.env.BIGQUERY_CREDENTIALS_JSON;
   const keyFilePath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
   if (credentialsJson) {
-    const credentials = JSON.parse(credentialsJson);
-    if (credentials.private_key) {
-      credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
-    }
-
+    const credentials = parseCredentialsJson(credentialsJson);
     return {
       projectId,
       credentials,
@@ -54,7 +78,13 @@ export async function queryBigQuery<T>(sql: string): Promise<T[]> {
     const [rows] = await client.query({ query: sql });
     return rows as T[];
   } catch (error) {
-    console.error('[BigQuery Error]', error);
+    console.error('[BigQuery Error]', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      hasCredentialsJson: Boolean(process.env.BIGQUERY_CREDENTIALS_JSON),
+      hasGoogleApplicationCredentials: Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS),
+      projectId: process.env.BIGQUERY_PROJECT_ID || 'renuv-amazon-data-warehouse',
+    });
     return [];
   }
 }
