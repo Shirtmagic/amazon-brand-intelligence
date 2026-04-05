@@ -1,12 +1,25 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useState, Suspense } from 'react';
 import { Menu, X, ChevronDown, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DateRangePicker } from './date-range-picker';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
+
+/** Build an href that preserves date-related query params (preset, from, to). */
+function withDateParams(href: string, searchParams: URLSearchParams): string {
+  const dateKeys = ['preset', 'from', 'to'];
+  const params = new URLSearchParams();
+  dateKeys.forEach((k) => {
+    const v = searchParams.get(k);
+    if (v) params.set(k, v);
+  });
+  const qs = params.toString();
+  return qs ? `${href}?${qs}` : href;
+}
 
 interface NavSection {
   title: string;
@@ -49,8 +62,9 @@ function getNavSections(brand?: string): NavSection[] {
   ];
 }
 
-export function Navigation({ brand }: { brand?: string } = {}) {
+function NavigationInner({ brand }: { brand?: string }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
   const navSections = getNavSections(brand);
 
@@ -59,7 +73,7 @@ export function Navigation({ brand }: { brand?: string } = {}) {
       {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--navy-900)] text-white shadow-lg lg:hidden"
+        className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--navy-900)] text-white shadow-lg xl:hidden"
         aria-label="Toggle navigation"
       >
         {mobileOpen ? <X size={20} /> : <Menu size={20} />}
@@ -69,15 +83,21 @@ export function Navigation({ brand }: { brand?: string } = {}) {
       <aside
         className={cn(
           'fixed left-0 top-0 z-40 h-screen w-60 bg-[var(--navy-900)] text-white transition-transform duration-300',
-          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          mobileOpen ? 'translate-x-0' : '-translate-x-full xl:translate-x-0'
         )}
       >
         <div className="flex h-full flex-col">
           {/* Logo area */}
           <div className="border-b border-white/10 px-5 py-6">
-            <Link href={brandRoot(brand)} className="flex items-center gap-2 text-lg font-semibold">
-              <span className="text-2xl">🐝</span>
-              <span>Blue Bees</span>
+            <Link href={brandRoot(brand)} className="flex items-center gap-3 text-lg font-semibold">
+              <Image
+                src="/blue-bees-marketing-logo.jpg"
+                alt="Blue Bees Marketing"
+                width={230}
+                height={74}
+                className="h-auto w-[200px] rounded-sm bg-white p-1"
+                priority
+              />
             </Link>
           </div>
 
@@ -109,7 +129,7 @@ export function Navigation({ brand }: { brand?: string } = {}) {
                     return (
                       <li key={item.href}>
                         <Link
-                          href={item.href}
+                          href={withDateParams(item.href, searchParams)}
                           onClick={() => setMobileOpen(false)}
                           className={cn(
                             'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -145,11 +165,19 @@ export function Navigation({ brand }: { brand?: string } = {}) {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/50 xl:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
     </>
+  );
+}
+
+export function Navigation({ brand }: { brand?: string } = {}) {
+  return (
+    <Suspense fallback={null}>
+      <NavigationInner brand={brand} />
+    </Suspense>
   );
 }
 
@@ -163,7 +191,7 @@ interface TopBarProps {
 export function TopBar({ brandName, periodLabel, isInternal, showLiveIndicator = true }: TopBarProps) {
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--line-soft)] bg-white/80 backdrop-blur-sm">
-      <div className="flex h-16 items-center justify-between px-6">
+      <div className="flex h-16 items-center justify-between px-4 pl-16 sm:px-6 xl:pl-6">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold text-[var(--ink-950)]">{brandName}</h2>
           {isInternal && (
@@ -175,7 +203,7 @@ export function TopBar({ brandName, periodLabel, isInternal, showLiveIndicator =
         <div className="flex items-center gap-4">
           <DateRangePicker />
           {showLiveIndicator && (
-            <div className="flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
+            <div className="hidden items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 md:flex">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>

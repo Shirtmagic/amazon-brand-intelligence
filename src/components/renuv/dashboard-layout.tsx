@@ -31,7 +31,7 @@ export function DashboardLayout({
     <div className="flex min-h-screen bg-[radial-gradient(circle_at_top,rgba(94,168,255,0.18),transparent_32%),linear-gradient(180deg,#eef5fb_0%,#f7f9fc_58%,#edf3f9_100%)]">
       <Navigation />
       
-      <div className="flex-1 lg:pl-60">
+      <div className="min-w-0 flex-1 xl:pl-60">
         <TopBar
           brandName={brandName}
           isInternal={isInternal}
@@ -61,7 +61,7 @@ export function DashboardLayout({
           </div>
         )}
 
-        <main className="p-6 lg:p-8">{children}</main>
+        <main className="min-w-0 overflow-x-hidden p-4 sm:p-6 xl:p-8">{children}</main>
       </div>
     </div>
   );
