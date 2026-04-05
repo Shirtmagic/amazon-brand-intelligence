@@ -62,5 +62,5 @@ Inspired by the Blue Bees org-chart graphics in `tmp/`:
 - spacious layout
 - soft shadows
 - no green-led palette
-
+deploy refresh
 <!-- vercel redeploy trigger -->
