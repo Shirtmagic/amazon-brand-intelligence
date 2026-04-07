@@ -1,6 +1,8 @@
 /**
  * BigQuery client singleton and query helper
  */
+import fs from 'node:fs';
+import path from 'node:path';
 import { BigQuery } from '@google-cloud/bigquery';
 
 // Singleton client instance
@@ -34,10 +36,27 @@ function parseCredentialsJson(raw: string) {
   throw new Error(`Unable to parse BIGQUERY_CREDENTIALS_JSON: ${String(lastError)}`);
 }
 
+function getLocalFallbackKeyFile(): string | null {
+  const candidates = [
+    process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    path.resolve(process.cwd(), '../secrets/renuv_bigquery_service_account.json'),
+    path.resolve(process.cwd(), '../../secrets/renuv_bigquery_service_account.json'),
+    path.resolve(process.cwd(), '../../../secrets/renuv_bigquery_service_account.json'),
+    '/Users/augustbot/.openclaw/workspace/secrets/renuv_bigquery_service_account.json',
+  ].filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
 function getBigQueryConfig(): ConstructorParameters<typeof BigQuery>[0] {
   const projectId = process.env.BIGQUERY_PROJECT_ID || 'renuv-amazon-data-warehouse';
   const credentialsJson = process.env.BIGQUERY_CREDENTIALS_JSON;
-  const keyFilePath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
   if (credentialsJson) {
     const credentials = parseCredentialsJson(credentialsJson);
@@ -47,6 +66,7 @@ function getBigQueryConfig(): ConstructorParameters<typeof BigQuery>[0] {
     };
   }
 
+  const keyFilePath = getLocalFallbackKeyFile();
   if (keyFilePath) {
     return {
       projectId,

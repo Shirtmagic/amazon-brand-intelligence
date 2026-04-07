@@ -32,22 +32,29 @@ export type TopQuery = {
   severity: 'positive' | 'neutral' | 'warning' | 'critical';
 };
 
+export type DiagnosticItem = {
+  label: string;
+  metric?: string;
+  recommendation?: string;
+};
+
 export type Diagnostic = {
   title: string;
   severity: 'positive' | 'neutral' | 'warning' | 'critical';
   detail: string;
   actionBias: string;
   sourceView: string;
+  items?: DiagnosticItem[];
 };
 
 export type PositionTracking = {
   asin: string;
   title: string;
   topQuery: string;
-  avgPosition: string;
-  positionChange: string;
-  organicShare: string;
-  sponsoredShare: string;
+  queryVolume: string;
+  impressionShare: string;
+  clickShare: string;
+  purchaseShare: string;
   clickThroughRate: string;
   diagnosis: string;
   severity: 'positive' | 'neutral' | 'warning' | 'critical';
@@ -186,9 +193,9 @@ export const renuvSearchMock: SearchSnapshot = {
     { title: 'Broad match query leakage', severity: 'warning' as const, detail: 'Broad match campaigns showing 12% of spend on low-relevance queries outside core scar treatment category.', actionBias: 'Review search term report and add negative keywords for irrelevant query clusters.', sourceView: 'reporting_amazon.search_diagnostic' }
   ],
   positionTracking: [
-    { asin: 'B0EXAMPLE1', title: 'Renuv Advanced Scar Gel', topQuery: 'scar gel for surgery', avgPosition: '2.1', positionChange: '+1.3', organicShare: '18%', sponsoredShare: '31%', clickThroughRate: '0.55%', diagnosis: 'Dominant position on primary term', severity: 'positive' as const },
-    { asin: 'B0EXAMPLE2', title: 'Renuv Silicone Scar Sheets', topQuery: 'silicone scar treatment', avgPosition: '4.7', positionChange: '+0.4', organicShare: '12%', sponsoredShare: '22%', clickThroughRate: '0.48%', diagnosis: 'Stable mid-page position', severity: 'neutral' as const },
-    { asin: 'B0EXAMPLE3', title: 'Renuv Post-Surgery Recovery Kit', topQuery: 'post surgery scar treatment', avgPosition: '6.2', positionChange: '+2.1', organicShare: '8%', sponsoredShare: '15%', clickThroughRate: '0.41%', diagnosis: 'Improving — organic gains accelerating', severity: 'positive' as const }
+    { asin: 'B0EXAMPLE1', title: 'Renuv Advanced Scar Gel', topQuery: 'scar gel for surgery', queryVolume: '142,000 searches', impressionShare: '18%', clickShare: '31%', purchaseShare: '12%', clickThroughRate: '0.55%', diagnosis: 'Dominant visibility on primary term', severity: 'positive' as const },
+    { asin: 'B0EXAMPLE2', title: 'Renuv Silicone Scar Sheets', topQuery: 'silicone scar treatment', queryVolume: '98,500 searches', impressionShare: '12%', clickShare: '22%', purchaseShare: '8%', clickThroughRate: '0.48%', diagnosis: 'Stable mid-tier visibility', severity: 'neutral' as const },
+    { asin: 'B0EXAMPLE3', title: 'Renuv Post-Surgery Recovery Kit', topQuery: 'post surgery scar treatment', queryVolume: '76,200 searches', impressionShare: '8%', clickShare: '15%', purchaseShare: '6%', clickThroughRate: '0.41%', diagnosis: 'Improving search visibility', severity: 'positive' as const }
   ],
   categoryRanks: [
     { category: 'Scar Treatments', currentRank: '#3', rankChange: '+1', topCompetitors: 'Mederma, ScarAway, Bio-Oil', trafficShare: '14.2%', tone: 'positive' as const },

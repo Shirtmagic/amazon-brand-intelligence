@@ -7,7 +7,8 @@ import {
   renuvSearchContracts,
   type SearchSnapshot
 } from '@/lib/renuv-search';
-import { KpiLabel } from './metric-tooltip';
+import { KpiLabel, MetricTooltip } from './metric-tooltip';
+import { SearchIntelligenceCard } from './search-intelligence-card';
 
 type Tone = 'positive' | 'negative' | 'neutral' | 'warning' | 'info' | 'critical' | 'active' | 'paused' | 'stale' | 'healthy' | 'degraded';
 type TrendDirection = 'up' | 'down' | 'flat';
@@ -97,7 +98,16 @@ export function RenuvInternalSearchPage({ snapshot, brand }: { snapshot: SearchS
           <Panel>
             <SectionHeading eyebrow="Query performance" title="Top search queries" />
             <DataTable
-              columns={['Query', 'Volume', 'Brand appear', 'Share of voice', 'Impressions', 'Clicks', 'Click share', 'Diagnosis']}
+              columns={[
+                { label: 'Query', help: 'The shopper search term being evaluated.' },
+                { label: 'Volume', help: 'Estimated demand for the query in the selected period.' },
+                { label: 'Brand appear', help: 'How often Renuv appears on the results page for this query.' },
+                { label: 'Share of voice', help: 'Estimated share of overall visible placements captured by Renuv.' },
+                { label: 'Impressions', help: 'How many times Renuv was shown on this query.' },
+                { label: 'Clicks', help: 'How many shopper clicks this query generated for Renuv.' },
+                { label: 'Click share', help: 'Estimated share of clicks Renuv captured versus the rest of the market on this query.' },
+                { label: 'Diagnosis', help: 'A plain-English read of the current search posture for this query.' }
+              ]}
               rows={snapshot.topQueries.map((row) => [
                 <span key="query" className="font-medium text-[var(--ink-950)]">{row.query}</span>,
                 <span key="volume" className="font-mono text-sm text-[var(--ink-800)]">{row.queryVolume}</span>,
@@ -119,7 +129,7 @@ export function RenuvInternalSearchPage({ snapshot, brand }: { snapshot: SearchS
             <SectionHeading eyebrow="Diagnostics" title="Search intelligence" />
             <div className="space-y-4">
               {snapshot.diagnostics.map((diagnostic, idx) => (
-                <DiagnosticCard key={idx} diagnostic={diagnostic} />
+                <SearchIntelligenceCard key={idx} diagnostic={diagnostic} />
               ))}
             </div>
           </Panel>
@@ -129,15 +139,25 @@ export function RenuvInternalSearchPage({ snapshot, brand }: { snapshot: SearchS
           <Panel>
             <SectionHeading eyebrow="Position tracking" title="ASIN search position trends" />
             <DataTable
-              columns={['ASIN', 'Title', 'Top query', 'Avg position', 'Δ position', 'Organic %', 'Sponsored %', 'CTR', 'Diagnosis']}
+              columns={[
+                { label: 'ASIN', help: 'Amazon product identifier. Tap to open the listing on Amazon.' },
+                { label: 'Title', help: 'The product/ASIN being tracked.' },
+                { label: 'Top query', help: 'The most important tracked query for this ASIN in the selected period.' },
+                { label: 'Query volume', help: 'Estimated search demand for the tracked query.' },
+                { label: 'Impression share', help: 'Share of total search impressions captured by this ASIN on the tracked query.' },
+                { label: 'Click share', help: 'Share of total clicks captured by this ASIN on the tracked query.' },
+                { label: 'Purchase share', help: 'Share of total purchases captured by this ASIN on the tracked query.' },
+                { label: 'CTR', help: 'Click-through rate from search impressions to product clicks.' },
+                { label: 'Diagnosis', help: 'A combined read of visibility quality, trend, and click behavior.' }
+              ]}
               rows={snapshot.positionTracking.map((row) => [
-                <span key="asin" className="font-mono text-sm font-medium text-[var(--blue-700)]">{row.asin}</span>,
+                <a key="asin" href={`https://www.amazon.com/dp/${row.asin}`} target="_blank" rel="noreferrer" className="font-mono text-sm font-medium text-[var(--blue-700)] underline-offset-2 hover:underline">{row.asin}</a>,
                 <span key="title" className="text-sm text-[var(--ink-900)]">{row.title}</span>,
                 <span key="query" className="text-sm italic text-[var(--ink-700)]">{row.topQuery}</span>,
-                <span key="pos" className="font-mono text-sm text-[var(--ink-800)]">{row.avgPosition}</span>,
-                <TrendCell key="trend" value={row.positionChange} inverse />,
-                <span key="org" className="font-mono text-sm text-[var(--ink-800)]">{row.organicShare}</span>,
-                <span key="spon" className="font-mono text-sm text-[var(--ink-800)]">{row.sponsoredShare}</span>,
+                <span key="volume" className="font-mono text-sm text-[var(--ink-800)]">{row.queryVolume}</span>,
+                <span key="imprshare" className="font-mono text-sm text-[var(--ink-800)]">{row.impressionShare}</span>,
+                <span key="clickshare" className="font-mono text-sm text-[var(--ink-800)]">{row.clickShare}</span>,
+                <span key="purchaseshare" className="font-mono text-sm text-[var(--ink-800)]">{row.purchaseShare}</span>,
                 <span key="ctr" className="font-mono text-sm text-[var(--ink-800)]">{row.clickThroughRate}</span>,
                 <div key="diag" className="flex items-center gap-2">
                   <SeverityDot tone={row.severity} />
@@ -152,6 +172,7 @@ export function RenuvInternalSearchPage({ snapshot, brand }: { snapshot: SearchS
         <section className="mb-6 grid gap-6 md:grid-cols-2">
           <Panel>
             <SectionHeading eyebrow="Category performance" title="Category rank trends" />
+            <p className="mb-4 text-sm leading-6 text-[var(--ink-700)]">Use these cards to see whether Renuv is gaining or losing competitive standing in its most relevant categories and whether the movement is worth acting on.</p>
             <div className="space-y-4">
               {snapshot.categoryRanks.map((cat, idx) => (
                 <CategoryRankCard key={idx} rank={cat} />
@@ -162,6 +183,7 @@ export function RenuvInternalSearchPage({ snapshot, brand }: { snapshot: SearchS
 
           <Panel>
             <SectionHeading eyebrow="Data freshness" title="Source health" />
+            <p className="mb-4 text-sm leading-6 text-[var(--ink-700)]">This tells you whether the search data on this page is current enough to trust for decision-making right now.</p>
             <div className="space-y-3">
               {snapshot.freshness.map((fresh, idx) => (
                 <FreshnessRow key={idx} freshness={fresh} />
@@ -173,16 +195,11 @@ export function RenuvInternalSearchPage({ snapshot, brand }: { snapshot: SearchS
 
         <section className="mb-6">
           <Panel>
-            <SectionHeading eyebrow="Data sources" title="Reporting views" />
-            <p className="mb-6 text-sm leading-7 text-[var(--ink-700)]">
-              Each section is backed by a named reporting view for auditability and traceability.
-            </p>
-            <div className="space-y-6">
-              <ContractBlock title="Query performance rollup" sql={renuvSearchContracts.kpi} />
-              <ContractBlock title="Daily query performance" sql={renuvSearchContracts.queryPerformance} />
-              <ContractBlock title="ASIN search position" sql={renuvSearchContracts.asinPosition} />
-              <ContractBlock title="Category rank" sql={renuvSearchContracts.categoryRank} />
-              <ContractBlock title="Data freshness" sql={renuvSearchContracts.freshness} />
+            <SectionHeading eyebrow="How to use this page" title="Operator guide" />
+            <div className="grid gap-4 md:grid-cols-3">
+              <QuickGuideCard title="Top queries" detail="Use this block to spot where demand is large, where Renuv is earning click share, and where search momentum supports more investment." />
+              <QuickGuideCard title="ASIN position" detail="Use this to identify which ASINs are holding visibility and which ones are slipping on the queries that matter most." />
+              <QuickGuideCard title="Category + freshness" detail="Use category rank and source health together before acting so you know both the strategic signal and whether the underlying data is current." />
             </div>
           </Panel>
         </section>
@@ -246,17 +263,24 @@ function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) 
   );
 }
 
-function DataTable({ columns, rows }: { columns: string[]; rows: ReactNode[][] }) {
+function DataTable({ columns, rows }: { columns: Array<string | { label: string; help?: string }>; rows: ReactNode[][] }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
           <tr className="border-b border-[var(--line-soft)]">
-            {columns.map((col, idx) => (
-              <th key={idx} className="px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ink-600)]">
-                {col}
-              </th>
-            ))}
+            {columns.map((col, idx) => {
+              const label = typeof col === 'string' ? col : col.label;
+              const help = typeof col === 'string' ? undefined : col.help;
+              return (
+                <th key={idx} className="px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ink-600)]">
+                  <span className="inline-flex items-center gap-1">
+                    {label}
+                    {help ? <MetricTooltip label={label} helpText={help} /> : null}
+                  </span>
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -372,13 +396,11 @@ function FreshnessRow({ freshness }: { freshness: { source: string; updatedAt: s
   );
 }
 
-function ContractBlock({ title, sql }: { title: string; sql: string }) {
+function QuickGuideCard({ title, detail }: { title: string; detail: string }) {
   return (
-    <div>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--ink-600)]">{title}</p>
-      <pre className="overflow-x-auto rounded-lg border border-[var(--line-soft)] bg-[var(--ink-950)] p-4 text-xs leading-6 text-[var(--ink-100)]">
-        <code>{sql}</code>
-      </pre>
+    <div className="rounded-[20px] border border-[var(--line-soft)] bg-[var(--panel-muted)] p-5">
+      <p className="text-sm font-semibold text-[var(--ink-900)]">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-[var(--ink-700)]">{detail}</p>
     </div>
   );
 }

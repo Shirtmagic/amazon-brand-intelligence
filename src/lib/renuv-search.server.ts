@@ -79,12 +79,43 @@ async function fetchSearchDiagnostics(sd?: string, ed?: string): Promise<Diagnos
     `;
     const risingRows = await queryBigQuery<any>(risingTermsSql);
     if (risingRows.length > 0 && risingRows[0].rising_count > 0) {
+      const risingDetailSql = `
+        WITH term_periods AS (
+          SELECT
+            search_term,
+            SUM(CASE WHEN DATE(date) >= DATE_SUB('${dateTo}', INTERVAL 6 DAY) THEN impressions ELSE 0 END) AS recent_impressions,
+            SUM(CASE WHEN DATE(date) < DATE_SUB('${dateTo}', INTERVAL 6 DAY) THEN impressions ELSE 0 END) AS prior_impressions,
+            SUM(clicks) AS clicks
+          FROM (
+            SELECT *, ROW_NUMBER() OVER (PARTITION BY DATE(date), campaign_id, search_term ORDER BY ob_processed_at DESC) as rn
+            FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sp_search_terms_v2_view\`
+            WHERE DATE(date) >= '${dateFrom}' AND DATE(date) <= '${dateTo}'
+          ) WHERE rn = 1
+          GROUP BY search_term
+        )
+        SELECT
+          search_term,
+          recent_impressions,
+          prior_impressions,
+          clicks,
+          SAFE_MULTIPLY(SAFE_DIVIDE(recent_impressions - prior_impressions, NULLIF(prior_impressions, 0)), 100) AS growth_pct
+        FROM term_periods
+        WHERE recent_impressions > prior_impressions * 1.5
+        ORDER BY recent_impressions DESC
+      `;
+      const risingDetailRows = await queryBigQuery<any>(risingDetailSql);
+
       diagnostics.push({
         title: `${risingRows[0].rising_count} rising search terms showing strong momentum`,
         severity: 'positive',
-        detail: `Identified ${risingRows[0].rising_count} terms with 50%+ impression growth in the recent half of the selected period. Sample: ${risingRows[0].sample_terms || 'N/A'}`,
+        detail: `Identified ${risingRows[0].rising_count} terms with 50%+ impression growth in the recent half of the selected period.`,
         actionBias: 'Consider increasing bids or expanding match types on high-growth terms to capture additional volume.',
         sourceView: 'ops_amazon.amzn_ads_sp_search_terms_v2_view',
+        items: risingDetailRows.map((row: any) => ({
+          label: row.search_term,
+          metric: `${Number(row.growth_pct || 0).toFixed(0)}% impression growth, ${Number(row.clicks || 0)} clicks`,
+          recommendation: Number(row.clicks || 0) >= 15 ? 'Raise bid / expand match types' : 'Expand match types and monitor',
+        })),
       });
     }
 
@@ -117,6 +148,18 @@ async function fetchSearchDiagnostics(sd?: string, ed?: string): Promise<Diagnos
           ? 'High branded spend may indicate defensive posture — consider expanding non-branded coverage for growth.'
           : 'Healthy balance between brand defense and category expansion.',
         sourceView: 'ops_amazon.amzn_ads_sp_search_terms_v2_view',
+        items: [
+          {
+            label: 'Branded search terms',
+            metric: `${brandedPct.toFixed(1)}% of spend | ${formatCurrency(branded.spend || 0)}`,
+            recommendation: brandedPct > 70 ? 'Protect only the highest-value branded terms' : 'Maintain branded defense',
+          },
+          {
+            label: 'Non-branded search terms',
+            metric: `${nonBrandedPct.toFixed(1)}% of spend | ${formatCurrency(nonBranded.spend || 0)}`,
+            recommendation: 'Expand the strongest category terms and cut waste',
+          },
+        ],
       });
     }
 
@@ -230,12 +273,12 @@ async function fetchPositionTracking(): Promise<PositionTracking[]> {
 
       return {
         asin: r.asin || '',
-        title: r.asin || '', // We don't have title in BA data, use ASIN
+        title: r.asin || '',
         topQuery: r.search_query || '',
-        avgPosition: '-', // BA doesn't provide position, only shares
-        positionChange: impressionShareChange > 0 ? `+${(impressionShareChange * 100).toFixed(1)}%` : `${(impressionShareChange * 100).toFixed(1)}%`,
-        organicShare: '-', // BA combines organic+sponsored
-        sponsoredShare: `${((r.impression_share || 0) * 100).toFixed(1)}%`,
+        queryVolume: `${Number(r.query_volume || 0).toLocaleString()} searches`,
+        impressionShare: `${((r.impression_share || 0) * 100).toFixed(1)}%`,
+        clickShare: `${((r.click_share || 0) * 100).toFixed(1)}%`,
+        purchaseShare: `${((r.purchase_share || 0) * 100).toFixed(1)}%`,
         clickThroughRate: `${ctr.toFixed(2)}%`,
         diagnosis,
         severity,
