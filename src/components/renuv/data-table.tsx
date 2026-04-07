@@ -3,6 +3,7 @@
 import { ReactNode, useState } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MetricTooltip } from './metric-tooltip';
 
 export interface Column<T = any> {
   key: string;
@@ -12,6 +13,7 @@ export interface Column<T = any> {
   align?: 'left' | 'center' | 'right';
   render?: (value: any, row: T) => ReactNode;
   truncate?: boolean;
+  helpText?: string;
 }
 
 interface DataTableProps<T = any> {
@@ -95,6 +97,7 @@ export function DataTable<T = any>({
               >
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] uppercase tracking-wider">{column.label}</span>
+                  {column.helpText && <MetricTooltip label={column.helpText} />}
                   {column.sortable && (
                     <span className="opacity-40">
                       {sortKey === column.key && sortDirection === 'asc' && <ArrowUp size={12} />}

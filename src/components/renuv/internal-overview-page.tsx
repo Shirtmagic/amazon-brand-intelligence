@@ -7,10 +7,19 @@ import { AlertSummaryWidget } from './alert-summary-widget';
 import { DateRangePicker } from './date-range-picker';
 import { OverviewChart } from './overview-chart';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
-import { KpiLabel } from './metric-tooltip';
+import { KpiLabel, MetricTooltip } from './metric-tooltip';
 
 function findKpi(kpis: RenuvOverviewSnapshot['kpis'], key: string) {
   return kpis.find((k) => k.key === key);
+}
+
+function getActionBiasHelp(actionBias: string) {
+  const normalized = actionBias.toLowerCase();
+  if (normalized.includes('reduce waste')) return 'Use this when spend is landing on lower-quality traffic and efficiency suggests tightening targeting or bids.';
+  if (normalized.includes('review targeting')) return 'Use this when the term is relevant but the current targeting setup likely needs refinement before adding more spend.';
+  if (normalized.includes('scale')) return 'Use this when efficiency and conversion quality suggest the term can likely support more budget or exposure.';
+  if (normalized.includes('defend')) return 'Use this when the term is strategically important and worth protecting with consistent coverage.';
+  return 'This recommendation reflects the best next action based on conversion quality, efficiency, and likely upside.';
 }
 
 function isFeeDataAvailable(feeSummary: RenuvOverviewSnapshot['feeSummary']) {
@@ -216,14 +225,21 @@ export function RenuvInternalOverviewPage({ snapshot, brand }: { snapshot: Renuv
           <Panel>
             <SectionHeading eyebrow="Search intelligence" title="Search opportunities" />
             <DataTable
-              columns={['Query', 'Theme', 'Volume', 'Opportunity', 'CVR gap', 'Action bias']}
+              columns={[
+                { label: 'Query' },
+                { label: 'Theme' },
+                { label: 'Volume' },
+                { label: 'Opportunity', help: 'Opportunity summarizes how attractive a search term looks based on demand, conversion quality, and room to win more sales.' },
+                { label: 'CVR gap', help: 'CVR gap compares this term’s conversion rate to the benchmark we expect for similar terms in the selected period.' },
+                { label: 'Action bias', help: 'Action bias is the recommended next move for this term based on efficiency, conversion quality, and likely upside.' }
+              ]}
               rows={snapshot.searchOpportunities.map((row) => [
                 row.query,
                 row.theme,
                 row.searchVolume,
                 row.opportunity,
                 row.cvrGap,
-                row.actionBias
+                <span title={getActionBiasHelp(row.actionBias)}>{row.actionBias}</span>
               ])}
               footer={snapshot.searchOpportunities[0]?.sourceView}
             />
@@ -400,16 +416,25 @@ function MiniMetric({ label, value, large = false }: { label: string; value: str
   );
 }
 
-function DataTable({ columns, rows, footer }: { columns: string[]; rows: Array<Array<ReactNode>>; footer?: string }) {
+function DataTable({ columns, rows, footer }: { columns: Array<string | { label: string; help?: string }>; rows: Array<Array<ReactNode>>; footer?: string }) {
   return (
     <div className="mt-5 overflow-hidden rounded-[24px] border border-[var(--line-soft)] bg-white shadow-[0_18px_42px_rgba(19,44,74,0.05)]">
       <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full border-collapse text-left">
           <thead className="bg-[var(--panel-muted)]">
             <tr>
-              {columns.map((column) => (
-                <th key={column} className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">{column}</th>
-              ))}
+              {columns.map((column) => {
+                const label = typeof column === 'string' ? column : column.label;
+                const help = typeof column === 'string' ? undefined : column.help;
+                return (
+                  <th key={label} className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">
+                    <span className="inline-flex items-center gap-1">
+                      {label}
+                      {help ? <MetricTooltip label={label} helpText={help} /> : null}
+                    </span>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -428,7 +453,7 @@ function DataTable({ columns, rows, footer }: { columns: string[]; rows: Array<A
           <div key={index} className="space-y-2 p-4">
             {row.map((cell, cellIndex) => (
               <div key={cellIndex} className="flex items-start justify-between gap-3">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-600)]">{columns[cellIndex]}</span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-600)]">{typeof columns[cellIndex] === 'string' ? columns[cellIndex] : columns[cellIndex].label}</span>
                 <span className="text-right text-sm leading-6 text-[var(--ink-800)]">{cell}</span>
               </div>
             ))}
