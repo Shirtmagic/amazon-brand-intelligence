@@ -69,6 +69,59 @@ export type CategoryRank = {
   tone: 'positive' | 'neutral' | 'warning' | 'critical';
 };
 
+/** Per-query competitive share from Brand Analytics */
+export type CategoryShareQuery = {
+  searchQuery: string;
+  queryVolume: number;
+  ourImpressionShare: number;
+  ourClickShare: number;
+  ourPurchaseShare: number;
+  competitorImpressionShare: number;
+  competitorClickShare: number;
+  competitorPurchaseShare: number;
+  weekOverWeekImpressionChange: number;
+  weekOverWeekClickChange: number;
+  weekOverWeekPurchaseChange: number;
+  /** >1 means we convert better than the field; <1 means competitors convert better */
+  conversionEdge: number;
+  ourImpressions: number;
+  ourClicks: number;
+  ourPurchases: number;
+  tone: 'positive' | 'neutral' | 'warning' | 'critical';
+};
+
+/** BSR tracking entry per ASIN */
+export type BSREntry = {
+  asin: string;
+  productName: string;
+  salesRank: number;
+};
+
+/** Weekly aggregate share trend point */
+export type CategoryShareTrend = {
+  weekEnding: string;
+  avgImpressionShare: number;
+  avgClickShare: number;
+  avgPurchaseShare: number;
+  totalImpressions: number;
+  totalClicks: number;
+  totalPurchases: number;
+};
+
+/** Full category intelligence container */
+export type CategoryIntelligence = {
+  headline: string;
+  avgImpressionShare: number;
+  avgClickShare: number;
+  avgPurchaseShare: number;
+  overallConversionEdge: number;
+  queryShares: CategoryShareQuery[];
+  bsrTracking: BSREntry[];
+  shareTrends: CategoryShareTrend[];
+  weekLabel: string;
+  sourceView: string;
+};
+
 export type Freshness = {
   source: string;
   updatedAt: string;
@@ -99,6 +152,7 @@ export type SearchSnapshot = {
   categoryRanks: CategoryRank[];
   freshness: Freshness[];
   freshnessSummary?: SearchFreshnessSummary;
+  categoryIntelligence?: CategoryIntelligence;
 };
 
 export const renuvSearchMock: SearchSnapshot = {

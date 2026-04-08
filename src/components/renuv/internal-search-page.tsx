@@ -11,6 +11,7 @@ import {
 import { KpiLabel, MetricTooltip } from './metric-tooltip';
 import { SearchIntelligenceCard } from './search-intelligence-card';
 import { VisibilityTrendChart, SearchTermBarChart, BrandedSplitDonut } from './search-charts';
+import { CategoryIntelligenceSection } from './category-intelligence';
 
 type Tone = 'positive' | 'negative' | 'neutral' | 'warning' | 'info' | 'critical' | 'active' | 'paused' | 'stale' | 'healthy' | 'degraded';
 type TrendDirection = 'up' | 'down' | 'flat';
@@ -197,18 +198,35 @@ export function RenuvInternalSearchPage({ snapshot, brand }: { snapshot: SearchS
           </Panel>
         </section>
 
-        <section className="mb-6 grid gap-6 md:grid-cols-2">
-          <Panel>
-            <SectionHeading eyebrow="Category performance" title="Category rank trends" />
-            <p className="mb-4 text-sm leading-6 text-[var(--ink-700)]">Use these cards to see whether Renuv is gaining or losing competitive standing in its most relevant categories and whether the movement is worth acting on.</p>
-            <div className="space-y-4">
-              {snapshot.categoryRanks.map((cat, idx) => (
-                <CategoryRankCard key={idx} rank={cat} />
-              ))}
-            </div>
-            <SourceTag>reporting_amazon.category_rank_daily</SourceTag>
-          </Panel>
+        {snapshot.categoryIntelligence && (
+          <section className="mb-6">
+            <Panel>
+              <SectionHeading eyebrow="Category intelligence" title="Competitive share analysis" />
+              <p className="mb-4 text-sm leading-6 text-[var(--ink-700)]">
+                Your market share vs all competitors across the search queries that matter most. Data from Amazon Brand Analytics — these are real share-of-market numbers, not internal estimates.
+              </p>
+              <CategoryIntelligenceSection data={snapshot.categoryIntelligence} />
+            </Panel>
+          </section>
+        )}
 
+        {/* Legacy category cards (shown only if new intelligence is unavailable) */}
+        {!snapshot.categoryIntelligence && snapshot.categoryRanks.length > 0 && (
+          <section className="mb-6">
+            <Panel>
+              <SectionHeading eyebrow="Category performance" title="Category rank trends" />
+              <p className="mb-4 text-sm leading-6 text-[var(--ink-700)]">Use these cards to see whether Renuv is gaining or losing competitive standing in its most relevant categories.</p>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {snapshot.categoryRanks.map((cat, idx) => (
+                  <CategoryRankCard key={idx} rank={cat} />
+                ))}
+              </div>
+              <SourceTag>reporting_amazon.category_rank_daily</SourceTag>
+            </Panel>
+          </section>
+        )}
+
+        <section className="mb-6">
           <Panel>
             <SectionHeading eyebrow="Data freshness" title="Source health" />
             <p className="mb-4 text-sm leading-6 text-[var(--ink-700)]">This tells you whether the search data on this page is current enough to trust for decision-making right now.</p>
@@ -225,7 +243,7 @@ export function RenuvInternalSearchPage({ snapshot, brand }: { snapshot: SearchS
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
               {snapshot.freshness.map((fresh, idx) => (
                 <SourceHealthRow key={idx} freshness={fresh} />
               ))}

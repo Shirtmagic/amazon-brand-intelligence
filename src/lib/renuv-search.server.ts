@@ -2,7 +2,7 @@
  * Server-only fetch functions for search data
  */
 import { queryBigQuery, formatCurrency } from './bigquery';
-import { SearchSnapshot, Diagnostic, PositionTracking, CategoryRank, Freshness, SearchFreshnessSummary } from './renuv-search';
+import { SearchSnapshot, Diagnostic, PositionTracking, CategoryRank, Freshness, SearchFreshnessSummary, CategoryShareQuery, BSREntry, CategoryShareTrend, CategoryIntelligence } from './renuv-search';
 import { sanitizeDateParam } from './date-utils';
 
 /**
@@ -380,6 +380,224 @@ async function fetchCategoryPerformance(): Promise<CategoryRank[]> {
 }
 
 /**
+ * Fetch comprehensive category intelligence:
+ * 1. Per-query competitive share (our share vs rest of market) from Brand Analytics
+ * 2. Week-over-week share trends across multiple weeks
+ * 3. BSR (Best Sellers Rank) tracking from inventory health table
+ */
+async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undefined> {
+  try {
+    // Query 1: Per-query share analysis — current week vs prior week
+    const queryShareSql = `
+      WITH latest_week AS (
+        SELECT MAX(end_date) AS max_week
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\`
+        WHERE ob_seller_id = 'A2CWSK2O443P17'
+      ),
+      current_agg AS (
+        SELECT
+          search_query_data_search_query AS search_query,
+          MAX(search_query_data_search_query_volume) AS query_volume,
+          SUM(impression_data_asin_impression_share) AS our_impression_share,
+          SUM(click_data_asin_click_share) AS our_click_share,
+          SUM(purchase_data_asin_purchase_share) AS our_purchase_share,
+          SUM(impression_data_asin_impression_count) AS our_impressions,
+          SUM(click_data_asin_click_count) AS our_clicks,
+          SUM(purchase_data_asin_purchase_count) AS our_purchases
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\`
+        CROSS JOIN latest_week
+        WHERE ob_seller_id = 'A2CWSK2O443P17' AND end_date = latest_week.max_week
+        GROUP BY search_query
+      ),
+      prior_agg AS (
+        SELECT
+          search_query_data_search_query AS search_query,
+          SUM(impression_data_asin_impression_share) AS prior_impression_share,
+          SUM(click_data_asin_click_share) AS prior_click_share,
+          SUM(purchase_data_asin_purchase_share) AS prior_purchase_share
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\`
+        CROSS JOIN latest_week
+        WHERE ob_seller_id = 'A2CWSK2O443P17'
+          AND end_date = DATE_SUB(latest_week.max_week, INTERVAL 7 DAY)
+        GROUP BY search_query
+      )
+      SELECT
+        c.search_query,
+        c.query_volume,
+        c.our_impression_share,
+        c.our_click_share,
+        c.our_purchase_share,
+        c.our_impressions,
+        c.our_clicks,
+        c.our_purchases,
+        COALESCE(p.prior_impression_share, 0) AS prior_impression_share,
+        COALESCE(p.prior_click_share, 0) AS prior_click_share,
+        COALESCE(p.prior_purchase_share, 0) AS prior_purchase_share
+      FROM current_agg c
+      LEFT JOIN prior_agg p ON c.search_query = p.search_query
+      WHERE c.query_volume > 0
+      ORDER BY c.query_volume DESC
+      LIMIT 25
+    `;
+
+    // Query 2: Share trends over last 8 weeks
+    const trendSql = `
+      WITH weeks AS (
+        SELECT DISTINCT end_date
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\`
+        WHERE ob_seller_id = 'A2CWSK2O443P17'
+        ORDER BY end_date DESC
+        LIMIT 8
+      )
+      SELECT
+        CAST(end_date AS STRING) AS week_ending,
+        AVG(impression_data_asin_impression_share) AS avg_impression_share,
+        AVG(click_data_asin_click_share) AS avg_click_share,
+        AVG(purchase_data_asin_purchase_share) AS avg_purchase_share,
+        SUM(impression_data_asin_impression_count) AS total_impressions,
+        SUM(click_data_asin_click_count) AS total_clicks,
+        SUM(purchase_data_asin_purchase_count) AS total_purchases
+      FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\`
+      WHERE ob_seller_id = 'A2CWSK2O443P17'
+        AND end_date IN (SELECT end_date FROM weeks)
+      GROUP BY end_date
+      ORDER BY end_date ASC
+    `;
+
+    // Query 3: BSR from inventory health
+    const bsrSql = `
+      SELECT
+        asin,
+        product_name,
+        sales_rank
+      FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`
+      WHERE ob_date = (SELECT MAX(ob_date) FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`)
+        AND sales_rank > 0
+      ORDER BY sales_rank ASC
+      LIMIT 15
+    `;
+
+    const [shareRows, trendRows, bsrRows] = await Promise.all([
+      queryBigQuery<any>(queryShareSql),
+      queryBigQuery<any>(trendSql),
+      queryBigQuery<any>(bsrSql),
+    ]);
+
+    if (shareRows.length === 0 && trendRows.length === 0 && bsrRows.length === 0) {
+      return undefined;
+    }
+
+    // Process per-query shares
+    const queryShares: CategoryShareQuery[] = shareRows.map((r: any) => {
+      const ourImpShare = Number(r.our_impression_share || 0);
+      const ourClickShare = Number(r.our_click_share || 0);
+      const ourPurchShare = Number(r.our_purchase_share || 0);
+      const priorImpShare = Number(r.prior_impression_share || 0);
+      const priorClickShare = Number(r.prior_click_share || 0);
+      const priorPurchShare = Number(r.prior_purchase_share || 0);
+
+      // Conversion edge: purchase share / click share relative to market average
+      // If we have 10% click share and 15% purchase share, our conversion edge = 1.5
+      // Market avg conversion = (100% - ourPurchShare) / (100% - ourClickShare) would be competitor rate
+      // Our rate vs their rate
+      const conversionEdge = ourClickShare > 0 ? (ourPurchShare / ourClickShare) : 0;
+
+      const impChange = ourImpShare - priorImpShare;
+      const clickChange = ourClickShare - priorClickShare;
+      const purchChange = ourPurchShare - priorPurchShare;
+
+      let tone: 'positive' | 'neutral' | 'warning' | 'critical' = 'neutral';
+      if (clickChange > 0.02 && purchChange >= 0) tone = 'positive';
+      else if (clickChange < -0.02 || purchChange < -0.03) tone = 'warning';
+      else if (clickChange < -0.05 && purchChange < -0.05) tone = 'critical';
+
+      return {
+        searchQuery: r.search_query || '',
+        queryVolume: Number(r.query_volume || 0),
+        ourImpressionShare: ourImpShare,
+        ourClickShare: ourClickShare,
+        ourPurchaseShare: ourPurchShare,
+        competitorImpressionShare: Math.max(0, 1 - ourImpShare),
+        competitorClickShare: Math.max(0, 1 - ourClickShare),
+        competitorPurchaseShare: Math.max(0, 1 - ourPurchShare),
+        weekOverWeekImpressionChange: impChange,
+        weekOverWeekClickChange: clickChange,
+        weekOverWeekPurchaseChange: purchChange,
+        conversionEdge,
+        ourImpressions: Number(r.our_impressions || 0),
+        ourClicks: Number(r.our_clicks || 0),
+        ourPurchases: Number(r.our_purchases || 0),
+        tone,
+      };
+    });
+
+    // Process trends
+    const shareTrends: CategoryShareTrend[] = trendRows.map((r: any) => {
+      const weekEnding = r.week_ending?.value || r.week_ending || '';
+      return {
+        weekEnding,
+        avgImpressionShare: Number(r.avg_impression_share || 0),
+        avgClickShare: Number(r.avg_click_share || 0),
+        avgPurchaseShare: Number(r.avg_purchase_share || 0),
+        totalImpressions: Number(r.total_impressions || 0),
+        totalClicks: Number(r.total_clicks || 0),
+        totalPurchases: Number(r.total_purchases || 0),
+      };
+    });
+
+    // Process BSR
+    const bsrTracking: BSREntry[] = bsrRows.map((r: any) => ({
+      asin: r.asin || '',
+      productName: r.product_name || r.asin || '',
+      salesRank: Number(r.sales_rank || 0),
+    }));
+
+    // Calculate averages for summary
+    const avgImpShare = queryShares.length > 0
+      ? queryShares.reduce((s, q) => s + q.ourImpressionShare, 0) / queryShares.length : 0;
+    const avgClickShare = queryShares.length > 0
+      ? queryShares.reduce((s, q) => s + q.ourClickShare, 0) / queryShares.length : 0;
+    const avgPurchShare = queryShares.length > 0
+      ? queryShares.reduce((s, q) => s + q.ourPurchaseShare, 0) / queryShares.length : 0;
+    const overallConvEdge = avgClickShare > 0 ? avgPurchShare / avgClickShare : 0;
+
+    const gainingCount = queryShares.filter(q => q.weekOverWeekClickChange > 0.01).length;
+    const losingCount = queryShares.filter(q => q.weekOverWeekClickChange < -0.01).length;
+
+    const weekLabel = shareTrends.length > 0
+      ? `Week ending ${shareTrends[shareTrends.length - 1].weekEnding}`
+      : 'Latest week';
+
+    let headline: string;
+    if (gainingCount > losingCount * 2) {
+      headline = `Strong competitive momentum — gaining share on ${gainingCount} of ${queryShares.length} tracked queries`;
+    } else if (losingCount > gainingCount * 2) {
+      headline = `Competitive pressure detected — losing share on ${losingCount} of ${queryShares.length} tracked queries`;
+    } else if (avgPurchShare > avgClickShare) {
+      headline = `Converting above market average (${(overallConvEdge * 100).toFixed(0)}% edge) across ${queryShares.length} tracked queries`;
+    } else {
+      headline = `Mixed competitive signals across ${queryShares.length} tracked queries — ${gainingCount} gaining, ${losingCount} losing`;
+    }
+
+    return {
+      headline,
+      avgImpressionShare: avgImpShare,
+      avgClickShare: avgClickShare,
+      avgPurchaseShare: avgPurchShare,
+      overallConversionEdge: overallConvEdge,
+      queryShares,
+      bsrTracking,
+      shareTrends,
+      weekLabel,
+      sourceView: 'ops_amazon.sp_ba_search_query_by_week_v1_view + ops_amazon.sp_fba_manage_inventory_health_v24',
+    };
+  } catch (error) {
+    console.error('[fetchCategoryIntelligence] Error:', error);
+    return undefined;
+  }
+}
+
+/**
  * Fetch freshness for the two search-specific data sources:
  * 1. Search Query Performance (paid search terms from SP ads)
  * 2. Brand Analytics / ASIN visibility (BA weekly views)
@@ -695,6 +913,8 @@ export async function fetchSearchSnapshot(startDate?: string, endDate?: string):
       // Brand Analytics data from BigQuery
       positionTracking: await fetchPositionTracking(),
       categoryRanks: await fetchCategoryPerformance(),
+      // Category intelligence (competitive shares, BSR, trends)
+      categoryIntelligence: await fetchCategoryIntelligence(),
       // Source freshness from BigQuery
       ...(await fetchSearchFreshness()),
     };
