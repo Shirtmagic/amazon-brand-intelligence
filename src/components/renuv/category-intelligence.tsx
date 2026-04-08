@@ -345,13 +345,14 @@ function BSRRow({ entry }: { entry: BSREntry }) {
   const hasTrend = entry.trend && entry.trend.length >= 2;
 
   // Calculate trend direction from history
-  let trendDirection: 'improving' | 'declining' | 'stable' = 'stable';
+  let trendDirection: 'improving' | 'needs attention' | 'stable' = 'stable';
   if (hasTrend) {
     const firstRank = entry.trend[0].rank;
     const lastRank = entry.trend[entry.trend.length - 1].rank;
     const changePct = ((lastRank - firstRank) / firstRank) * 100;
+    // Lower rank = better, so rank going down = improving
     if (changePct < -5) trendDirection = 'improving';
-    else if (changePct > 5) trendDirection = 'declining';
+    else if (changePct > 5) trendDirection = 'needs attention';
   }
 
   return (
@@ -373,9 +374,9 @@ function BSRRow({ entry }: { entry: BSREntry }) {
             <a href={`https://www.amazon.com/dp/${entry.asin}`} target="_blank" rel="noreferrer" className="font-mono text-[11px] text-[var(--blue-700)] hover:underline" onClick={e => e.stopPropagation()}>{entry.asin}</a>
             {hasTrend && (
               <span className={`text-[10px] font-semibold ${
-                trendDirection === 'improving' ? 'text-[#2d8a56]' : trendDirection === 'declining' ? 'text-[#b15d27]' : 'text-[#627587]'
+                trendDirection === 'improving' ? 'text-[#2d8a56]' : trendDirection === 'needs attention' ? 'text-[#b15d27]' : 'text-[#627587]'
               }`}>
-                {trendDirection === 'improving' ? 'Improving' : trendDirection === 'declining' ? 'Declining' : 'Stable'}
+                {trendDirection === 'improving' ? 'Improving' : trendDirection === 'needs attention' ? 'Needs attention' : 'Stable'}
               </span>
             )}
           </div>
