@@ -468,28 +468,63 @@ async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undef
       ORDER BY end_date ASC
     `;
 
-    // Query 3: BSR current snapshot from inventory health
+    // Query 3: BSR current snapshot — pick the top-selling child ASIN per rank group
+    // ASINs sharing the same sales_rank are in the same parent listing.
+    // Join with fact_sales_traffic_daily to pick the child with the most revenue.
     const bsrSql = `
-      SELECT
-        asin,
-        product_name,
-        sales_rank
-      FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`
-      WHERE ob_date = (SELECT MAX(ob_date) FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`)
-        AND sales_rank > 0
+      WITH latest_inv AS (
+        SELECT asin, product_name, sales_rank
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`
+        WHERE ob_date = (SELECT MAX(ob_date) FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`)
+          AND sales_rank > 0
+      ),
+      asin_revenue AS (
+        SELECT asin, SUM(ordered_revenue) AS total_revenue
+        FROM \`renuv-amazon-data-warehouse.core_amazon.fact_sales_traffic_daily\`
+        WHERE brand_key = 'renuv' AND marketplace_key = 'US'
+          AND date_day >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+        GROUP BY asin
+      ),
+      ranked AS (
+        SELECT
+          i.asin,
+          i.product_name,
+          i.sales_rank,
+          COALESCE(r.total_revenue, 0) AS revenue,
+          ROW_NUMBER() OVER (PARTITION BY i.sales_rank ORDER BY COALESCE(r.total_revenue, 0) DESC) AS rn
+        FROM latest_inv i
+        LEFT JOIN asin_revenue r ON i.asin = r.asin
+      )
+      SELECT asin, product_name, sales_rank
+      FROM ranked
+      WHERE rn = 1
       ORDER BY sales_rank ASC
       LIMIT 15
     `;
 
-    // Query 4: BSR historical trend (last 30 snapshots per ASIN)
+    // Query 4: BSR historical trend — fetch for the top-selling child per rank group
     const bsrTrendSql = `
-      WITH ranked_asins AS (
-        SELECT asin
+      WITH latest_inv AS (
+        SELECT asin, sales_rank
         FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`
         WHERE ob_date = (SELECT MAX(ob_date) FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`)
           AND sales_rank > 0
-        ORDER BY sales_rank ASC
-        LIMIT 15
+      ),
+      asin_revenue AS (
+        SELECT asin, SUM(ordered_revenue) AS total_revenue
+        FROM \`renuv-amazon-data-warehouse.core_amazon.fact_sales_traffic_daily\`
+        WHERE brand_key = 'renuv' AND marketplace_key = 'US'
+          AND date_day >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+        GROUP BY asin
+      ),
+      best_child AS (
+        SELECT i.asin, i.sales_rank,
+          ROW_NUMBER() OVER (PARTITION BY i.sales_rank ORDER BY COALESCE(r.total_revenue, 0) DESC) AS rn
+        FROM latest_inv i
+        LEFT JOIN asin_revenue r ON i.asin = r.asin
+      ),
+      ranked_asins AS (
+        SELECT asin FROM best_child WHERE rn = 1 ORDER BY sales_rank ASC LIMIT 15
       ),
       recent_dates AS (
         SELECT DISTINCT ob_date
@@ -588,21 +623,14 @@ async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undef
       bsrTrendMap.get(asin)!.push({ date: dateVal, rank });
     }
 
-    // Process BSR with trend data — deduplicate by salesRank
-    // ASINs in the same parent listing share the same BSR, so keep only one per rank
-    const seenRanks = new Set<number>();
-    const bsrTracking: BSREntry[] = [];
-    for (const r of bsrRows) {
-      const rank = Number(r.sales_rank || 0);
-      if (seenRanks.has(rank)) continue;
-      seenRanks.add(rank);
-      bsrTracking.push({
-        asin: r.asin || '',
-        productName: r.product_name || r.asin || '',
-        salesRank: rank,
-        trend: bsrTrendMap.get(r.asin || '') || [],
-      });
-    }
+    // Process BSR with trend data
+    // SQL already picks the top-selling child per parent (by revenue), one per rank
+    const bsrTracking: BSREntry[] = bsrRows.map((r: any) => ({
+      asin: r.asin || '',
+      productName: r.product_name || r.asin || '',
+      salesRank: Number(r.sales_rank || 0),
+      trend: bsrTrendMap.get(r.asin || '') || [],
+    }));
 
     // Calculate averages for summary
     const avgImpShare = queryShares.length > 0
