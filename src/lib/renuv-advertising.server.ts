@@ -7,6 +7,9 @@ import {
   AdvertisingKpi,
   CampaignPerformanceRow,
   AdvertisingChartDataPoint,
+  KeywordWasteRow,
+  KeywordPlacement,
+  KeywordWasteSummary,
 } from './renuv-advertising';
 import { sanitizeDateParam, extractDateValue } from './date-utils';
 
@@ -268,6 +271,14 @@ export async function fetchAdvertisingSnapshot(startDate?: string, endDate?: str
       sourceView: row.sourceView,
     }));
 
+    // Fetch keyword waste analysis
+    let keywordWaste: KeywordWasteSummary | undefined;
+    try {
+      keywordWaste = await fetchKeywordWaste(sd || defaultStart, ed || defaultEnd);
+    } catch (kwErr) {
+      console.error('[fetchAdvertisingSnapshot] keyword waste fetch failed:', kwErr);
+    }
+
     return {
       brand: 'Renuv',
       periodLabel: sd && ed ? `${sd} – ${ed}` : 'Trailing 30 days',
@@ -289,7 +300,8 @@ export async function fetchAdvertisingSnapshot(startDate?: string, endDate?: str
       freshness,
       spendMix,
       searchTerms,
-      diagnostics
+      diagnostics,
+      keywordWaste
     };
   } catch (error) {
     console.error('[fetchAdvertisingSnapshot] Failed:', error);
@@ -310,4 +322,153 @@ export async function fetchAdvertisingSnapshot(startDate?: string, endDate?: str
       diagnostics: []
     };
   }
+}
+
+/**
+ * Fetch keyword-level waste analysis.
+ * Compares per-keyword ad spend against product price from inventory data
+ * to identify "runaway" keywords where spend exceeds product cost without adequate sales.
+ */
+async function fetchKeywordWaste(startDate: string, endDate: string): Promise<KeywordWasteSummary> {
+  // Step 1: Get aggregated keyword-level spend + sales
+  const keywordSql = `
+    SELECT
+      search_term,
+      SUM(CAST(cost AS FLOAT64)) AS total_spend,
+      SUM(CAST(sales14d AS FLOAT64)) AS total_sales,
+      SUM(CAST(purchases14d AS INT64)) AS total_orders,
+      SUM(CAST(clicks AS INT64)) AS total_clicks,
+      SUM(CAST(impressions AS INT64)) AS total_impressions
+    FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sp_search_terms_v2_view\`
+    WHERE DATE(date) >= '${startDate}' AND DATE(date) <= '${endDate}'
+      AND CAST(cost AS FLOAT64) > 0
+    GROUP BY search_term
+    HAVING SUM(CAST(cost AS FLOAT64)) > 5
+    ORDER BY total_spend DESC
+    LIMIT 200
+  `;
+
+  // Step 2: Get per-keyword placement breakdown (campaign + match type)
+  const placementSql = `
+    SELECT
+      search_term,
+      campaign_name,
+      match_type,
+      SUM(CAST(cost AS FLOAT64)) AS spend,
+      SUM(CAST(sales14d AS FLOAT64)) AS sales,
+      SUM(CAST(clicks AS INT64)) AS clicks,
+      SUM(CAST(impressions AS INT64)) AS impressions,
+      SUM(CAST(purchases14d AS INT64)) AS orders
+    FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sp_search_terms_v2_view\`
+    WHERE DATE(date) >= '${startDate}' AND DATE(date) <= '${endDate}'
+      AND CAST(cost AS FLOAT64) > 0
+    GROUP BY search_term, campaign_name, match_type
+    ORDER BY spend DESC
+  `;
+
+  // Step 3: Get average product price from inventory
+  const priceSql = `
+    SELECT AVG(featuredoffer_price) AS avg_price
+    FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`
+    WHERE ob_date = (SELECT MAX(ob_date) FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`)
+      AND featuredoffer_price > 0
+  `;
+
+  const [keywordRows, placementRows, priceRows] = await Promise.all([
+    queryBigQuery<any>(keywordSql),
+    queryBigQuery<any>(placementSql),
+    queryBigQuery<any>(priceSql),
+  ]);
+
+  const avgPrice = priceRows.length > 0 ? Number(priceRows[0].avg_price || 0) : 30; // fallback
+
+  // Build placement lookup: keyword → placements[]
+  const placementMap = new Map<string, KeywordPlacement[]>();
+  for (const p of placementRows) {
+    const key = p.search_term;
+    const spend = Number(p.spend || 0);
+    const sales = Number(p.sales || 0);
+    const placement: KeywordPlacement = {
+      campaignName: p.campaign_name || 'Unknown',
+      matchType: p.match_type || 'Unknown',
+      spend,
+      sales,
+      clicks: Number(p.clicks || 0),
+      impressions: Number(p.impressions || 0),
+      orders: Number(p.orders || 0),
+      roas: spend > 0 ? sales / spend : 0,
+      acos: sales > 0 ? (spend / sales) * 100 : spend > 0 ? 999 : 0,
+    };
+    if (!placementMap.has(key)) placementMap.set(key, []);
+    placementMap.get(key)!.push(placement);
+  }
+
+  // Evaluate each keyword for waste
+  const flagged: KeywordWasteRow[] = [];
+  for (const row of keywordRows) {
+    const totalSpend = Number(row.total_spend || 0);
+    const totalSales = Number(row.total_sales || 0);
+    const totalOrders = Number(row.total_orders || 0);
+    const totalClicks = Number(row.total_clicks || 0);
+
+    // How many units should this spend have bought at avg product price?
+    const expectedSales = avgPrice > 0 ? totalSpend / avgPrice : 0;
+    const salesDeficit = expectedSales - totalOrders;
+    const spendToProductRatio = avgPrice > 0 ? totalSpend / avgPrice : 0;
+
+    // Flag if spend >= 1x product price AND orders are insufficient
+    // Critical: spend >= 2x price with < 2 sales, or spend >= price with 0 sales
+    // Warning: spend >= price with fewer sales than expected
+    // Watch: spend >= 0.7x price with poor efficiency
+    let severity: 'critical' | 'warning' | 'watch' | null = null;
+
+    if (totalSpend >= avgPrice * 2 && totalOrders < 2) {
+      severity = 'critical';
+    } else if (totalSpend >= avgPrice && totalOrders === 0) {
+      severity = 'critical';
+    } else if (totalSpend >= avgPrice && totalOrders < expectedSales * 0.5) {
+      severity = 'warning';
+    } else if (totalSpend >= avgPrice * 0.7 && totalOrders < expectedSales * 0.5) {
+      severity = 'watch';
+    }
+
+    if (severity) {
+      flagged.push({
+        keyword: row.search_term,
+        totalSpend,
+        totalSales,
+        totalOrders,
+        totalClicks,
+        avgProductPrice: avgPrice,
+        spendToProductRatio,
+        expectedSalesAtPrice: expectedSales,
+        salesDeficit,
+        placements: placementMap.get(row.search_term) || [],
+        severity,
+      });
+    }
+  }
+
+  // Sort: critical first, then warning, then watch; within severity by spend desc
+  const severityOrder = { critical: 0, warning: 1, watch: 2 };
+  flagged.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity] || b.totalSpend - a.totalSpend);
+
+  const totalWasted = flagged.reduce((sum, kw) => sum + kw.totalSpend, 0);
+  const criticalCount = flagged.filter(k => k.severity === 'critical').length;
+  const warningCount = flagged.filter(k => k.severity === 'warning').length;
+
+  const headline = criticalCount > 0
+    ? `${criticalCount} critical runaway keyword${criticalCount > 1 ? 's' : ''} detected — ${formatCurrency(totalWasted)} total flagged spend`
+    : warningCount > 0
+      ? `${warningCount} keywords with spend-to-sales imbalance — review recommended`
+      : flagged.length > 0
+        ? `${flagged.length} keywords on watch for potential waste`
+        : 'No runaway keywords detected — keyword efficiency looks healthy';
+
+  return {
+    headline,
+    totalWastedSpend: totalWasted,
+    flaggedKeywords: flagged.slice(0, 30), // cap at 30 for UI
+    sourceView: 'ops_amazon.amzn_ads_sp_search_terms_v2_view + ops_amazon.sp_fba_manage_inventory_health_v24',
+  };
 }

@@ -81,6 +81,42 @@ export type DiagnosticItem = {
   sourceView: string;
 };
 
+/** A single keyword placement: one campaign + match type combo for a keyword */
+export type KeywordPlacement = {
+  campaignName: string;
+  matchType: string;
+  spend: number;
+  sales: number;
+  clicks: number;
+  impressions: number;
+  orders: number;
+  roas: number;
+  acos: number;
+};
+
+/** A keyword flagged for waste — spend vs product price analysis */
+export type KeywordWasteRow = {
+  keyword: string;
+  totalSpend: number;
+  totalSales: number;
+  totalOrders: number;
+  totalClicks: number;
+  avgProductPrice: number;
+  spendToProductRatio: number;
+  expectedSalesAtPrice: number;
+  salesDeficit: number;
+  placements: KeywordPlacement[];
+  severity: 'critical' | 'warning' | 'watch';
+};
+
+/** Summary container for keyword waste analysis */
+export type KeywordWasteSummary = {
+  headline: string;
+  totalWastedSpend: number;
+  flaggedKeywords: KeywordWasteRow[];
+  sourceView: string;
+};
+
 export type AdvertisingSnapshot = {
   brand: string;
   periodLabel: string;
@@ -96,6 +132,7 @@ export type AdvertisingSnapshot = {
   spendMix: SpendMixRow[];
   searchTerms: SearchTermRow[];
   diagnostics: DiagnosticItem[];
+  keywordWaste?: KeywordWasteSummary;
 };
 
 export const renuvAdvertisingMock: AdvertisingSnapshot = {

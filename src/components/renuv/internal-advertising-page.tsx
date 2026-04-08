@@ -10,6 +10,7 @@ import {
 import { KpiLabel } from './metric-tooltip';
 import { AdvertisingChart } from './advertising-chart';
 import { RoasByCampaignChart, SpendMixDonut } from './campaign-charts';
+import { KeywordWasteTable } from './keyword-waste-table';
 
 type Tone = 'positive' | 'negative' | 'neutral' | 'warning' | 'info' | 'critical' | 'active' | 'paused' | 'stale' | 'healthy' | 'degraded';
 type TrendDirection = 'up' | 'down' | 'flat';
@@ -239,6 +240,22 @@ export function RenuvInternalAdvertisingPage({ snapshot, brand }: { snapshot: Ad
             </div>
           </Panel>
         </section>
+
+        {snapshot.keywordWaste && (
+          <section className="mb-6">
+            <Panel>
+              <SectionHeading eyebrow="Keyword waste detection" title="Runaway keyword analysis" />
+              <p className="mt-3 mb-5 max-w-3xl text-sm leading-6 text-[var(--ink-700)]">
+                Identifies keywords where ad spend has reached or exceeded the average product price without generating proportional sales.
+                Click any keyword to see every campaign and match type where it runs.
+              </p>
+              <div className="mt-4 rounded-[24px] border border-[rgba(94,168,255,0.14)] bg-[linear-gradient(135deg,rgba(94,168,255,0.08),rgba(255,255,255,0.96))] p-5 mb-5">
+                <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--ink-950)]">{snapshot.keywordWaste.headline}</h3>
+              </div>
+              <KeywordWasteTable waste={snapshot.keywordWaste} />
+            </Panel>
+          </section>
+        )}
 
         <section className="rounded-[28px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] p-5 shadow-[0_24px_70px_rgba(19,44,74,0.08)] backdrop-blur md:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
