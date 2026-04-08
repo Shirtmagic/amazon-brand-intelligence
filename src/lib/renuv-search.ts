@@ -90,11 +90,18 @@ export type CategoryShareQuery = {
   tone: 'positive' | 'neutral' | 'warning' | 'critical';
 };
 
-/** BSR tracking entry per ASIN */
+/** BSR tracking entry per ASIN with historical trend */
 export type BSREntry = {
   asin: string;
   productName: string;
   salesRank: number;
+  trend: BSRTrendPoint[];
+};
+
+/** Single data point in BSR history */
+export type BSRTrendPoint = {
+  date: string;
+  rank: number;
 };
 
 /** Weekly aggregate share trend point */

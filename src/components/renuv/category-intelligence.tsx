@@ -4,6 +4,8 @@ import { useState } from 'react';
 import {
   AreaChart,
   Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -284,29 +286,125 @@ function ShareTrendChart({ trends }: { trends: CategoryShareTrend[] }) {
   );
 }
 
+function BSRTrendChart({ trend, productName }: { trend: BSREntry['trend']; productName: string }) {
+  if (!trend || trend.length < 2) {
+    return <p className="text-xs text-[var(--ink-600)] py-2">Insufficient history for trend chart.</p>;
+  }
+
+  const data = trend.map(t => ({
+    date: t.date.replace(/^\d{4}-/, ''),
+    rank: t.rank,
+  }));
+
+  // For BSR, lower is better so we reverse the Y axis
+  const maxRank = Math.max(...trend.map(t => t.rank));
+  const minRank = Math.min(...trend.map(t => t.rank));
+  const padding = Math.max(Math.round((maxRank - minRank) * 0.15), 500);
+
+  return (
+    <div className="mt-3">
+      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ink-600)]">
+        BSR trend — {productName}
+      </p>
+      <ResponsiveContainer width="100%" height={160}>
+        <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 10 }}
+            interval={Math.max(0, Math.floor(data.length / 6))}
+          />
+          <YAxis
+            reversed
+            tick={{ fontSize: 10 }}
+            tickFormatter={(v: number) => `#${v.toLocaleString()}`}
+            width={65}
+            domain={[Math.max(1, minRank - padding), maxRank + padding]}
+          />
+          <Tooltip
+            formatter={(value: number) => [`#${value.toLocaleString()}`, 'BSR']}
+            contentStyle={{ borderRadius: 10, border: '1px solid rgba(0,0,0,0.08)', fontSize: 12 }}
+          />
+          <Line
+            type="monotone"
+            dataKey="rank"
+            stroke="#3b82f6"
+            strokeWidth={2}
+            dot={{ r: 2.5, fill: '#3b82f6' }}
+            activeDot={{ r: 4 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+      <p className="mt-1 text-[10px] text-[var(--ink-500)]">Lower rank = better. Chart Y-axis is inverted.</p>
+    </div>
+  );
+}
+
+function BSRRow({ entry }: { entry: BSREntry }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasTrend = entry.trend && entry.trend.length >= 2;
+
+  // Calculate trend direction from history
+  let trendDirection: 'improving' | 'declining' | 'stable' = 'stable';
+  if (hasTrend) {
+    const firstRank = entry.trend[0].rank;
+    const lastRank = entry.trend[entry.trend.length - 1].rank;
+    const changePct = ((lastRank - firstRank) / firstRank) * 100;
+    if (changePct < -5) trendDirection = 'improving';
+    else if (changePct > 5) trendDirection = 'declining';
+  }
+
+  return (
+    <>
+      <div
+        className={`flex items-center gap-3 px-4 py-3 ${hasTrend ? 'cursor-pointer hover:bg-[rgba(94,168,255,0.04)]' : ''} transition-colors`}
+        onClick={() => hasTrend && setExpanded(!expanded)}
+      >
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8f4ff] text-xs font-bold text-[#1a5490] shrink-0">
+          {hasTrend ? (
+            expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+          ) : (
+            <Award size={14} />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-[var(--ink-900)] truncate">{entry.productName}</p>
+          <div className="flex items-center gap-2">
+            <a href={`https://www.amazon.com/dp/${entry.asin}`} target="_blank" rel="noreferrer" className="font-mono text-[11px] text-[var(--blue-700)] hover:underline" onClick={e => e.stopPropagation()}>{entry.asin}</a>
+            {hasTrend && (
+              <span className={`text-[10px] font-semibold ${
+                trendDirection === 'improving' ? 'text-[#2d8a56]' : trendDirection === 'declining' ? 'text-[#b15d27]' : 'text-[#627587]'
+              }`}>
+                {trendDirection === 'improving' ? 'Improving' : trendDirection === 'declining' ? 'Declining' : 'Stable'}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-lg font-semibold tabular-nums text-[var(--ink-950)]">#{entry.salesRank.toLocaleString()}</p>
+          <p className="text-[10px] text-[var(--ink-600)]">in category</p>
+        </div>
+      </div>
+      {expanded && hasTrend && (
+        <div className="px-4 pb-4 border-b border-[var(--line-soft)]">
+          <BSRTrendChart trend={entry.trend} productName={entry.productName} />
+        </div>
+      )}
+    </>
+  );
+}
+
 function BSRTable({ entries }: { entries: BSREntry[] }) {
   if (entries.length === 0) return null;
 
   return (
     <div className="overflow-hidden rounded-[20px] border border-[var(--line-soft)] bg-white shadow-sm">
       <div className="bg-[var(--panel-muted)] px-4 py-2.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-600)]">Best Sellers Rank (BSR)</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-600)]">Best Sellers Rank (BSR) — click for trend</p>
       </div>
       <div className="divide-y divide-[var(--line-soft)]">
         {entries.map((e) => (
-          <div key={e.asin} className="flex items-center gap-3 px-4 py-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8f4ff] text-xs font-bold text-[#1a5490]">
-              <Award size={14} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-[var(--ink-900)] truncate">{e.productName}</p>
-              <a href={`https://www.amazon.com/dp/${e.asin}`} target="_blank" rel="noreferrer" className="font-mono text-[11px] text-[var(--blue-700)] hover:underline">{e.asin}</a>
-            </div>
-            <div className="text-right">
-              <p className="text-lg font-semibold tabular-nums text-[var(--ink-950)]">#{e.salesRank.toLocaleString()}</p>
-              <p className="text-[10px] text-[var(--ink-600)]">in category</p>
-            </div>
-          </div>
+          <BSRRow key={e.asin} entry={e} />
         ))}
       </div>
     </div>

@@ -252,18 +252,22 @@ async function fetchPositionTracking(): Promise<PositionTracking[]> {
       return [];
     }
 
+    // NOTE: Brand Analytics stores shares as percentages (e.g., 20.94 = 20.94%)
     return rows.map((r: any) => {
-      const impressionShareChange = Number(r.impression_share || 0) - Number(r.prior_impression_share || 0);
-      const clickShareChange = Number(r.click_share || 0) - Number(r.prior_click_share || 0);
+      const impressionSharePct = Number(r.impression_share || 0); // already percentage
+      const priorImpSharePct = Number(r.prior_impression_share || 0);
+      const impressionShareChange = impressionSharePct - priorImpSharePct;
+      const clickSharePct = Number(r.click_share || 0);
+      const purchaseSharePct = Number(r.purchase_share || 0);
       const ctr = Number(r.impressions || 0) > 0 ? (Number(r.clicks || 0) / Number(r.impressions || 0)) * 100 : 0;
-      
+
       let severity: 'positive' | 'neutral' | 'warning' | 'critical' = 'neutral';
       let diagnosis = 'Stable performance';
-      
-      if (impressionShareChange > 0.05) {
+
+      if (impressionShareChange > 2) {
         severity = 'positive';
         diagnosis = 'Growing impression share — strong momentum';
-      } else if (impressionShareChange < -0.05) {
+      } else if (impressionShareChange < -2) {
         severity = 'warning';
         diagnosis = 'Declining impression share — monitor competitive pressure';
       } else if (ctr > 0.8) {
@@ -276,9 +280,9 @@ async function fetchPositionTracking(): Promise<PositionTracking[]> {
         title: r.asin || '',
         topQuery: r.search_query || '',
         queryVolume: `${Number(r.query_volume || 0).toLocaleString()} searches`,
-        impressionShare: `${(Number(r.impression_share || 0) * 100).toFixed(1)}%`,
-        clickShare: `${(Number(r.click_share || 0) * 100).toFixed(1)}%`,
-        purchaseShare: `${(Number(r.purchase_share || 0) * 100).toFixed(1)}%`,
+        impressionShare: `${impressionSharePct.toFixed(1)}%`,
+        clickShare: `${clickSharePct.toFixed(1)}%`,
+        purchaseShare: `${purchaseSharePct.toFixed(1)}%`,
         clickThroughRate: `${ctr.toFixed(2)}%`,
         diagnosis,
         severity,
@@ -464,7 +468,7 @@ async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undef
       ORDER BY end_date ASC
     `;
 
-    // Query 3: BSR from inventory health
+    // Query 3: BSR current snapshot from inventory health
     const bsrSql = `
       SELECT
         asin,
@@ -477,10 +481,38 @@ async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undef
       LIMIT 15
     `;
 
-    const [shareRows, trendRows, bsrRows] = await Promise.all([
+    // Query 4: BSR historical trend (last 30 snapshots per ASIN)
+    const bsrTrendSql = `
+      WITH ranked_asins AS (
+        SELECT asin
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`
+        WHERE ob_date = (SELECT MAX(ob_date) FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`)
+          AND sales_rank > 0
+        ORDER BY sales_rank ASC
+        LIMIT 15
+      ),
+      recent_dates AS (
+        SELECT DISTINCT ob_date
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`
+        ORDER BY ob_date DESC
+        LIMIT 30
+      )
+      SELECT
+        h.asin,
+        CAST(h.ob_date AS STRING) AS ob_date,
+        h.sales_rank
+      FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\` h
+      INNER JOIN ranked_asins ra ON h.asin = ra.asin
+      INNER JOIN recent_dates rd ON h.ob_date = rd.ob_date
+      WHERE h.sales_rank > 0
+      ORDER BY h.asin, h.ob_date ASC
+    `;
+
+    const [shareRows, trendRows, bsrRows, bsrTrendRows] = await Promise.all([
       queryBigQuery<any>(queryShareSql),
       queryBigQuery<any>(trendSql),
       queryBigQuery<any>(bsrSql),
+      queryBigQuery<any>(bsrTrendSql),
     ]);
 
     if (shareRows.length === 0 && trendRows.length === 0 && bsrRows.length === 0) {
@@ -488,24 +520,25 @@ async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undef
     }
 
     // Process per-query shares
+    // NOTE: Brand Analytics stores shares as percentages (e.g., 20.94 = 20.94%).
+    // We normalize to 0-1 decimals by dividing by 100.
     const queryShares: CategoryShareQuery[] = shareRows.map((r: any) => {
-      const ourImpShare = Number(r.our_impression_share || 0);
-      const ourClickShare = Number(r.our_click_share || 0);
-      const ourPurchShare = Number(r.our_purchase_share || 0);
-      const priorImpShare = Number(r.prior_impression_share || 0);
-      const priorClickShare = Number(r.prior_click_share || 0);
-      const priorPurchShare = Number(r.prior_purchase_share || 0);
+      const ourImpShare = Number(r.our_impression_share || 0) / 100;
+      const ourClickShare = Number(r.our_click_share || 0) / 100;
+      const ourPurchShare = Number(r.our_purchase_share || 0) / 100;
+      const priorImpShare = Number(r.prior_impression_share || 0) / 100;
+      const priorClickShare = Number(r.prior_click_share || 0) / 100;
+      const priorPurchShare = Number(r.prior_purchase_share || 0) / 100;
 
-      // Conversion edge: purchase share / click share relative to market average
-      // If we have 10% click share and 15% purchase share, our conversion edge = 1.5
-      // Market avg conversion = (100% - ourPurchShare) / (100% - ourClickShare) would be competitor rate
-      // Our rate vs their rate
+      // Conversion edge: purchase share / click share
+      // >1 means we convert better than the field average
       const conversionEdge = ourClickShare > 0 ? (ourPurchShare / ourClickShare) : 0;
 
       const impChange = ourImpShare - priorImpShare;
       const clickChange = ourClickShare - priorClickShare;
       const purchChange = ourPurchShare - priorPurchShare;
 
+      // Thresholds in decimal: 0.02 = 2 percentage points
       let tone: 'positive' | 'neutral' | 'warning' | 'critical' = 'neutral';
       if (clickChange > 0.02 && purchChange >= 0) tone = 'positive';
       else if (clickChange < -0.02 || purchChange < -0.03) tone = 'warning';
@@ -531,25 +564,36 @@ async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undef
       };
     });
 
-    // Process trends
+    // Process trends — same /100 normalization
     const shareTrends: CategoryShareTrend[] = trendRows.map((r: any) => {
       const weekEnding = r.week_ending?.value || r.week_ending || '';
       return {
         weekEnding,
-        avgImpressionShare: Number(r.avg_impression_share || 0),
-        avgClickShare: Number(r.avg_click_share || 0),
-        avgPurchaseShare: Number(r.avg_purchase_share || 0),
+        avgImpressionShare: Number(r.avg_impression_share || 0) / 100,
+        avgClickShare: Number(r.avg_click_share || 0) / 100,
+        avgPurchaseShare: Number(r.avg_purchase_share || 0) / 100,
         totalImpressions: Number(r.total_impressions || 0),
         totalClicks: Number(r.total_clicks || 0),
         totalPurchases: Number(r.total_purchases || 0),
       };
     });
 
-    // Process BSR
+    // Build BSR trend lookup: asin → [{date, rank}]
+    const bsrTrendMap = new Map<string, { date: string; rank: number }[]>();
+    for (const row of bsrTrendRows) {
+      const asin = row.asin || '';
+      const dateVal = row.ob_date?.value || row.ob_date || '';
+      const rank = Number(row.sales_rank || 0);
+      if (!bsrTrendMap.has(asin)) bsrTrendMap.set(asin, []);
+      bsrTrendMap.get(asin)!.push({ date: dateVal, rank });
+    }
+
+    // Process BSR with trend data
     const bsrTracking: BSREntry[] = bsrRows.map((r: any) => ({
       asin: r.asin || '',
       productName: r.product_name || r.asin || '',
       salesRank: Number(r.sales_rank || 0),
+      trend: bsrTrendMap.get(r.asin || '') || [],
     }));
 
     // Calculate averages for summary
