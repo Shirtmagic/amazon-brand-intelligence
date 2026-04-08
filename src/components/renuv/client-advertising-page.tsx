@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ArrowLeft, ArrowUpRight, TrendingUp, TrendingDown, Target, BarChart2, Lightbulb } from 'lucide-react';
@@ -52,15 +54,8 @@ export function RenuvClientAdvertisingPage({ snapshot, brand }: { snapshot: Clie
           <p className="mt-3 text-sm leading-6 text-[var(--ink-700)]">
             Advertising spend grew 6.1% while attributed sales increased 13.2%, driving meaningful TACOS improvement. ROAS strengthened from 5.69x to 6.10x as campaign optimizations and search term refinements improved efficiency across the portfolio.
           </p>
-          <div className="mt-6 h-80 overflow-x-auto rounded-[24px] border border-[var(--line-soft)] bg-gradient-to-br from-[rgba(94,168,255,0.04)] to-white p-4 sm:p-6">
-            <p className="text-center text-sm text-[var(--ink-600)]">
-              [Dual-axis chart: Spend & attributed sales (bars) + ROAS (line) over 30 days]
-            </p>
-            <div className="mt-4 space-y-2 text-center text-xs text-[var(--ink-500)]">
-              <p>Chart component integration point: Daily spend, sales, and ROAS trend</p>
-              <p>Left Y-axis: $ values | Right Y-axis: ROAS multiplier</p>
-              <p>Shows improving efficiency trajectory with ROAS climbing from 5.7x to 6.1x</p>
-            </div>
+          <div className="mt-6 overflow-x-auto rounded-[24px] border border-[var(--line-soft)] bg-gradient-to-br from-[rgba(94,168,255,0.04)] to-white p-4 sm:p-6">
+            <ClientAdChart campaigns={snapshot.campaigns} />
           </div>
           <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--blue-700)]">
             reporting_amazon.client_advertising_trend_daily
@@ -219,6 +214,41 @@ function EfficiencyMetricCard({ metric }: { metric: typeof snapshot.efficiency.m
       <p className="text-sm font-semibold text-[var(--ink-950)]">{metric.label}</p>
       <p className="mt-2 text-base font-semibold text-[var(--blue-700)]">{metric.value}</p>
       <p className="mt-3 text-sm leading-6 text-[var(--ink-700)]">{metric.interpretation}</p>
+    </div>
+  );
+}
+
+// Inline chart component for client advertising
+function ClientAdChart({ campaigns }: { campaigns: CampaignPerformance[] }) {
+  'use client';
+
+  if (!campaigns || campaigns.length === 0) {
+    return <p className="text-center text-sm text-[var(--ink-600)]">No campaign data available</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {campaigns.map((c, idx) => {
+        const roas = parseFloat(c.roas) || 0;
+        const maxRoas = Math.max(...campaigns.map(c => parseFloat(c.roas) || 0), 1);
+        const width = Math.min((roas / maxRoas) * 100, 100);
+        const color = roas >= 6 ? '#10b981' : roas >= 4 ? '#2563eb' : roas >= 2 ? '#f59e0b' : '#ef4444';
+        return (
+          <div key={idx} className="flex items-center gap-3">
+            <span className="w-[140px] shrink-0 truncate text-xs text-[var(--ink-700)]">{c.campaign.length > 20 ? c.campaign.slice(0, 20) + '...' : c.campaign}</span>
+            <div className="flex-1 h-6 rounded-full bg-[var(--panel-muted)] overflow-hidden">
+              <div className="h-full rounded-full transition-all" style={{ width: `${width}%`, backgroundColor: color }} />
+            </div>
+            <span className="w-[50px] shrink-0 text-right text-xs font-semibold text-[var(--ink-800)]">{c.roas}x</span>
+          </div>
+        );
+      })}
+      <div className="mt-3 flex flex-wrap items-center gap-4 text-[11px] text-[var(--ink-600)]">
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#10b981]" />ROAS 6x+</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#2563eb]" />ROAS 4-6x</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#f59e0b]" />ROAS 2-4x</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#ef4444]" />ROAS &lt;2x</span>
+      </div>
     </div>
   );
 }

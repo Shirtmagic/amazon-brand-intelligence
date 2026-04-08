@@ -85,6 +85,16 @@ export function ReviewExportControls({
           <Download size={16} />
           Export PDF
         </button>
+
+        <button
+          onClick={() => handleExport('csv')}
+          disabled={isExporting}
+          className="mc-btn mc-btn-ghost flex items-center gap-2"
+          title="Export as CSV"
+        >
+          <FileText size={16} />
+          CSV
+        </button>
       </div>
 
       {reviewMode === 'presentation' && (

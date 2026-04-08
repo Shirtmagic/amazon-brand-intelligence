@@ -85,10 +85,22 @@ export function RenuvClientPortalPage({ snapshot, hideControls = false, brand }:
             <div className="rounded-[28px] border border-[rgba(94,168,255,0.14)] bg-[linear-gradient(135deg,rgba(94,168,255,0.12),rgba(255,255,255,0.96))] p-6 shadow-[0_20px_50px_rgba(19,44,74,0.08)]">
               <h3 className="text-xl font-semibold tracking-[-0.03em] text-[var(--ink-950)]">Performance at a glance</h3>
               <div className="mt-5 space-y-3">
-                <QuickMetric label="Revenue growth" value="+12.4%" trend="up" />
-                <QuickMetric label="Advertising efficiency" value="TACOS 16.4% (improved)" trend="up" />
-                <QuickMetric label="Conversion rate" value="19.2% (+1.4 pts)" trend="up" />
-                <QuickMetric label="Order volume" value="3,248 orders (+9.8%)" trend="up" />
+                {(() => {
+                  const quickKpis = ['revenue', 'tacos', 'conversion', 'orders'];
+                  const kpiMap = new Map(snapshot.kpis.map(k => [k.key, k]));
+                  return quickKpis.map(key => {
+                    const kpi = kpiMap.get(key);
+                    if (!kpi) return null;
+                    return (
+                      <QuickMetric
+                        key={key}
+                        label={kpi.label}
+                        value={`${kpi.value} (${kpi.delta})`}
+                        trend={kpi.trend === 'down' ? 'down' : 'up'}
+                      />
+                    );
+                  });
+                })()}
               </div>
             </div>
           </div>

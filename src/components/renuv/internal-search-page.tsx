@@ -10,7 +10,7 @@ import {
 } from '@/lib/renuv-search';
 import { KpiLabel, MetricTooltip } from './metric-tooltip';
 import { SearchIntelligenceCard } from './search-intelligence-card';
-import { VisibilityTrendChart } from './search-charts';
+import { VisibilityTrendChart, SearchTermBarChart, BrandedSplitDonut } from './search-charts';
 
 type Tone = 'positive' | 'negative' | 'neutral' | 'warning' | 'info' | 'critical' | 'active' | 'paused' | 'stale' | 'healthy' | 'degraded';
 type TrendDirection = 'up' | 'down' | 'flat';
@@ -134,6 +134,23 @@ export function RenuvInternalSearchPage({ snapshot, brand }: { snapshot: SearchS
                 <SearchIntelligenceCard key={idx} diagnostic={diagnostic} />
               ))}
             </div>
+          </Panel>
+        </section>
+
+        <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)]">
+          <Panel>
+            <SectionHeading eyebrow="Search terms" title="Top search terms by clicks" />
+            <p className="mb-4 text-sm leading-6 text-[var(--ink-700)]">Click and order volume by search term, colored by term category.</p>
+            <SearchTermBarChart terms={snapshot.topTerms} />
+            <SourceTag>ops_amazon.amzn_ads_sp_search_terms_v3_view</SourceTag>
+          </Panel>
+          <Panel>
+            <SectionHeading eyebrow="Revenue split" title="Branded vs non-branded" />
+            <p className="mb-4 text-sm leading-6 text-[var(--ink-700)]">Share of search revenue from branded vs non-branded terms.</p>
+            <div className="flex items-center justify-center">
+              <BrandedSplitDonut terms={snapshot.topTerms} />
+            </div>
+            <SourceTag>ops_amazon.amzn_ads_sp_search_terms_v3_view</SourceTag>
           </Panel>
         </section>
 

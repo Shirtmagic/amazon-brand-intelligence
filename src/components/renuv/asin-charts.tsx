@@ -27,39 +27,41 @@ export function RevenueByAsinChart({ asins }: { asins: Array<{ asin: string; tit
   }).sort((a, b) => b.Revenue - a.Revenue).slice(0, 10);
 
   return (
-    <div className="h-[340px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-          <XAxis type="number" tick={{ fontSize: 11, fill: '#627587' }} tickFormatter={(v: number) => v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`} />
-          <YAxis type="category" dataKey="name" tick={{ fontSize: 9, fill: '#627587' }} width={120} />
-          <Tooltip
-            contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', fontSize: '13px', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
-            formatter={(v: number) => [`$${v.toLocaleString()}`, 'Revenue']}
-          />
-          <Bar dataKey="Revenue" radius={[0, 6, 6, 0]}>
-            {data.map((entry, idx) => (
-              <Cell key={idx} fill={entry.tone === 'positive' ? '#10b981' : entry.tone === 'warning' ? '#f59e0b' : entry.tone === 'critical' ? '#ef4444' : '#2563eb'} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-      <div className="mt-3 flex flex-wrap items-center gap-4 px-2">
-        <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#10b981]" />
-          <span className="text-[11px] text-[var(--ink-600)]">Leader (&gt;15% share or &gt;30% CVR)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#2563eb]" />
-          <span className="text-[11px] text-[var(--ink-600)]">Active</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#f59e0b]" />
-          <span className="text-[11px] text-[var(--ink-600)]">Low stock warning</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#ef4444]" />
-          <span className="text-[11px] text-[var(--ink-600)]">Critical</span>
+    <div className="overflow-x-auto">
+      <div className="h-[340px] w-full min-w-[400px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+            <XAxis type="number" tick={{ fontSize: 11, fill: '#627587' }} tickFormatter={(v: number) => v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`} />
+            <YAxis type="category" dataKey="name" tick={{ fontSize: 9, fill: '#627587' }} width={120} />
+            <Tooltip
+              contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', fontSize: '13px', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
+              formatter={(v: number) => [`$${v.toLocaleString()}`, 'Revenue']}
+            />
+            <Bar dataKey="Revenue" radius={[0, 6, 6, 0]}>
+              {data.map((entry, idx) => (
+                <Cell key={idx} fill={entry.tone === 'positive' ? '#10b981' : entry.tone === 'warning' ? '#f59e0b' : entry.tone === 'critical' ? '#ef4444' : '#2563eb'} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+        <div className="mt-3 flex flex-wrap items-center gap-4 px-2">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#10b981]" />
+            <span className="text-[11px] text-[var(--ink-600)]">Leader (&gt;15% share or &gt;30% CVR)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#2563eb]" />
+            <span className="text-[11px] text-[var(--ink-600)]">Active</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#f59e0b]" />
+            <span className="text-[11px] text-[var(--ink-600)]">Low stock warning</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#ef4444]" />
+            <span className="text-[11px] text-[var(--ink-600)]">Critical</span>
+          </div>
         </div>
       </div>
     </div>

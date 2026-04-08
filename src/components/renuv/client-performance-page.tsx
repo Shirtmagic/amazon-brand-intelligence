@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ArrowLeft, ArrowUpRight, TrendingUp, TrendingDown, BarChart3, Package, Lightbulb } from 'lucide-react';
+import { ClientPerfChart } from './client-performance-chart';
 import { cn } from '@/lib/utils';
 import type { ClientPerformanceSnapshot, PerformanceKpi, TopAsin } from '@/lib/renuv-client-performance';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
@@ -52,15 +55,8 @@ export function RenuvClientPerformancePage({ snapshot, brand }: { snapshot: Clie
           <p className="mt-3 text-sm leading-6 text-[var(--ink-700)]">
             Revenue showed consistent growth throughout the period with particularly strong performance in the final week. Conversion rate steadily improved from 18.1% to 19.3%, driving revenue growth ahead of traffic increases.
           </p>
-          <div className="mt-6 h-80 overflow-x-auto rounded-[24px] border border-[var(--line-soft)] bg-gradient-to-br from-[rgba(94,168,255,0.04)] to-white p-4 sm:p-6">
-            <p className="text-center text-sm text-[var(--ink-600)]">
-              [Dual-axis line chart: Revenue (bars) + CVR (line) over 30 days]
-            </p>
-            <div className="mt-4 space-y-2 text-center text-xs text-[var(--ink-500)]">
-              <p>Chart component integration point: {snapshot.trendData.length} daily data points</p>
-              <p>Left Y-axis: Revenue ($0-$25k) | Right Y-axis: CVR (17%-20%)</p>
-              <p>Trend shows revenue acceleration in final 10 days with stable CVR improvement</p>
-            </div>
+          <div className="mt-6 overflow-x-auto rounded-[24px] border border-[var(--line-soft)] bg-gradient-to-br from-[rgba(94,168,255,0.04)] to-white p-4 sm:p-6">
+            <ClientPerfChart data={snapshot.trendData} />
           </div>
           <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--blue-700)]">
             reporting_amazon.client_performance_trend_daily
