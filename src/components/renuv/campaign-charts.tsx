@@ -13,16 +13,17 @@ export function RoasByCampaignChart({ campaigns }: { campaigns: CampaignPerforma
   }
 
   const data = campaigns
-    .map(c => ({ campaign: c.campaign.length > 28 ? c.campaign.slice(0, 28) + '...' : c.campaign, roas: parseFloat(c.roas) || 0 }))
-    .sort((a, b) => b.roas - a.roas);
+    .map(c => ({ campaign: c.campaign.length > 18 ? c.campaign.slice(0, 18) + '...' : c.campaign, roas: parseFloat(c.roas) || 0 }))
+    .sort((a, b) => b.roas - a.roas)
+    .slice(0, 8);
 
   return (
     <div className="h-[280px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ left: 140, right: 20, top: 5, bottom: 5 }}>
+        <BarChart data={data} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-          <XAxis type="number" tick={{ fontSize: 11, fill: '#627587' }} domain={[0, 'auto']} />
-          <YAxis type="category" dataKey="campaign" tick={{ fontSize: 10, fill: '#627587' }} width={130} />
+          <XAxis type="number" tick={{ fontSize: 11, fill: '#627587' }} domain={[0, 'auto']} tickFormatter={(v: number) => `${v}x`} />
+          <YAxis type="category" dataKey="campaign" tick={{ fontSize: 9, fill: '#627587' }} width={100} />
           <Tooltip
             contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', fontSize: '13px', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
             formatter={(v: number) => [`${v.toFixed(2)}x`, 'ROAS']}
