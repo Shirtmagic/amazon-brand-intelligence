@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import type { PerformanceSnapshot, PerformanceKpi } from '@/lib/renuv-performance';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
 import { KpiLabel } from './metric-tooltip';
+import { PerformanceChart } from './performance-chart';
 
 export function PerformanceDetail({ snapshot, brand }: { snapshot: PerformanceSnapshot; brand?: string }) {
   return (
@@ -42,13 +43,8 @@ export function PerformanceDetail({ snapshot, brand }: { snapshot: PerformanceSn
           <p className="mt-3 text-sm leading-6 text-[var(--ink-700)]">
             Revenue and order trends showing consistent growth with strong late-period acceleration. Conversion rate improvements sustained throughout the period.
           </p>
-          <div className="mt-6 h-80 overflow-hidden rounded-[24px] border border-[var(--line-soft)] bg-gradient-to-br from-[rgba(94,168,255,0.04)] to-white p-4 sm:p-6">
-            <p className="text-center text-sm text-[var(--ink-600)]">
-              [Multi-line chart: Revenue, Orders, Conversion Rate over 30 days]
-            </p>
-            <p className="mt-3 text-center text-xs text-[var(--ink-500)]">
-              Chart showing {snapshot.chartData.length} daily data points with revenue (primary axis), orders, and conversion rate
-            </p>
+          <div className="mt-6 overflow-hidden rounded-[24px] border border-[var(--line-soft)] bg-gradient-to-br from-[rgba(94,168,255,0.04)] to-white p-4 sm:p-6">
+            <PerformanceChart data={snapshot.chartData} />
           </div>
         </section>
 

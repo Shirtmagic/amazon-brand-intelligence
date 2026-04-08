@@ -54,6 +54,8 @@ export type ClientPortalSnapshot = {
   executiveSummary: string;
   kpis: ClientKpi[];
   trendData: TrendDataPoint[];
+  organicRevenue: number;
+  ppcRevenue: number;
   growthDrivers: GrowthDriver[];
   risks: ClientRisk[];
   nextSteps: NextStep[];
@@ -153,6 +155,8 @@ export const renuvClientPortalMock: ClientPortalSnapshot = {
     { date: '2026-03-30', revenue: 22800, orders: 137, adSpend: 3500, sessions: 710 },
     { date: '2026-03-31', revenue: 23500, orders: 141, adSpend: 3600, sessions: 730 }
   ],
+  organicRevenue: 336500,
+  ppcRevenue: 206300,
   growthDrivers: [
     {
       title: 'Conversion rate improvement',

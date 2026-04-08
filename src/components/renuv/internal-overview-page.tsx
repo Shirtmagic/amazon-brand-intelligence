@@ -6,6 +6,7 @@ import type { RenuvOverviewSnapshot, Tone } from '@/lib/renuv-overview';
 import { AlertSummaryWidget } from './alert-summary-widget';
 import { DateRangePicker } from './date-range-picker';
 import { OverviewChart } from './overview-chart';
+import { CvrAcosTrendChart, OverviewRevenueDonut } from './overview-secondary-charts';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
 import { KpiLabel, MetricTooltip } from './metric-tooltip';
 
@@ -146,6 +147,21 @@ export function RenuvInternalOverviewPage({ snapshot, brand }: { snapshot: Renuv
             <SectionHeading eyebrow="Performance over time" title="Revenue, ad spend &amp; sessions" />
             <div className="mt-5">
               <OverviewChart data={snapshot.dailyData} />
+            </div>
+          </Panel>
+        </section>
+
+        <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)]">
+          <Panel>
+            <SectionHeading eyebrow="Efficiency trends" title="CVR vs ACOS" />
+            <div className="mt-5">
+              <CvrAcosTrendChart data={snapshot.dailyData} />
+            </div>
+          </Panel>
+          <Panel>
+            <SectionHeading eyebrow="Revenue mix" title="Organic vs PPC" />
+            <div className="mt-5 flex items-center justify-center">
+              <OverviewRevenueDonut data={snapshot.dailyData} />
             </div>
           </Panel>
         </section>

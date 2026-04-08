@@ -49,47 +49,59 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
     const adSpendSql = sd && ed
       ? `
       WITH all_campaigns AS (
-        SELECT DATE(date) as date_day, cost as spend
+        SELECT DATE(date) as date_day, cost as spend, sales14d as attributed_sales
         FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sp_campaigns_v3_view\`
         WHERE DATE(date) >= '${sd}' AND DATE(date) <= '${ed}'
         UNION ALL
-        SELECT DATE(date), cost
+        SELECT DATE(date), cost, sales
         FROM (
           SELECT *, ROW_NUMBER() OVER (PARTITION BY DATE(date), campaign_id ORDER BY ob_processed_at DESC) as rn
           FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sb_campaigns_v1_view\`
           WHERE DATE(date) >= '${sd}' AND DATE(date) <= '${ed}'
         ) WHERE rn = 1
         UNION ALL
-        SELECT DATE(date), cost
+        SELECT DATE(date), cost, sales
         FROM (
           SELECT *, ROW_NUMBER() OVER (PARTITION BY DATE(date), campaign_id ORDER BY ob_processed_at DESC) as rn
           FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sd_campaigns_v3_view\`
           WHERE DATE(date) >= '${sd}' AND DATE(date) <= '${ed}'
         ) WHERE rn = 1
       )
-      SELECT SUM(spend) AS total_ad_spend FROM all_campaigns
+      SELECT
+        date_day,
+        SUM(spend) AS ad_spend,
+        SUM(attributed_sales) AS ad_sales
+      FROM all_campaigns
+      GROUP BY date_day
+      ORDER BY date_day
     `
       : `
       WITH all_campaigns AS (
-        SELECT DATE(date) as date_day, cost as spend
+        SELECT DATE(date) as date_day, cost as spend, sales14d as attributed_sales
         FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sp_campaigns_v3_view\`
         WHERE DATE(date) >= DATE_SUB(CURRENT_DATE(), INTERVAL 60 DAY)
         UNION ALL
-        SELECT DATE(date), cost
+        SELECT DATE(date), cost, sales
         FROM (
           SELECT *, ROW_NUMBER() OVER (PARTITION BY DATE(date), campaign_id ORDER BY ob_processed_at DESC) as rn
           FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sb_campaigns_v1_view\`
           WHERE DATE(date) >= DATE_SUB(CURRENT_DATE(), INTERVAL 60 DAY)
         ) WHERE rn = 1
         UNION ALL
-        SELECT DATE(date), cost
+        SELECT DATE(date), cost, sales
         FROM (
           SELECT *, ROW_NUMBER() OVER (PARTITION BY DATE(date), campaign_id ORDER BY ob_processed_at DESC) as rn
           FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sd_campaigns_v3_view\`
           WHERE DATE(date) >= DATE_SUB(CURRENT_DATE(), INTERVAL 60 DAY)
         ) WHERE rn = 1
       )
-      SELECT SUM(spend) AS total_ad_spend FROM all_campaigns
+      SELECT
+        date_day,
+        SUM(spend) AS ad_spend,
+        SUM(attributed_sales) AS ad_sales
+      FROM all_campaigns
+      GROUP BY date_day
+      ORDER BY date_day
     `;
 
     const [trafficRows, adSpendRows] = await Promise.all([
@@ -105,6 +117,8 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
         executiveSummary: 'No data available for the selected period.',
         kpis: [],
         trendData: [],
+        organicRevenue: 0,
+        ppcRevenue: 0,
         growthDrivers: [],
         risks: [],
         nextSteps: [],
@@ -123,8 +137,16 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
     const currentOrders = trafficRows.reduce((sum, r) => sum + (r.orders || 0), 0);
     const currentSessions = trafficRows.reduce((sum, r) => sum + (r.sessions || 0), 0);
 
-    // Ad spend from the dedicated ads query
-    const currentAdSpend = adSpendRows.length > 0 ? (adSpendRows[0].total_ad_spend || 0) : 0;
+    // Build daily ad spend lookup from the ads query
+    const adByDay = new Map<string, { spend: number; sales: number }>();
+    for (const r of adSpendRows) {
+      const day = typeof r.date_day === 'object' ? r.date_day.value : String(r.date_day);
+      adByDay.set(day, { spend: r.ad_spend || 0, sales: r.ad_sales || 0 });
+    }
+
+    // Ad spend totals
+    const currentAdSpend = adSpendRows.reduce((sum, r) => sum + (r.ad_spend || 0), 0);
+    const currentAdSales = adSpendRows.reduce((sum, r) => sum + (r.ad_sales || 0), 0);
 
     // TACOS = Total Ad Cost of Sales = ad_spend / revenue
     const currentTacos = currentRevenue > 0 ? (currentAdSpend / currentRevenue) * 100 : 0;
@@ -196,14 +218,18 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
       }
     ];
 
-    // Trend data from traffic rows (reverse chronological to ascending)
-    const trendData: TrendDataPoint[] = [...trafficRows].reverse().map(r => ({
-      date: typeof r.date_day === 'object' ? r.date_day.value : r.date_day,
-      revenue: r.ordered_revenue || 0,
-      orders: r.orders || 0,
-      adSpend: 0,
-      sessions: r.sessions || 0
-    }));
+    // Trend data from traffic rows merged with daily ad data
+    const trendData: TrendDataPoint[] = [...trafficRows].reverse().map(r => {
+      const day = typeof r.date_day === 'object' ? r.date_day.value : String(r.date_day);
+      const ad = adByDay.get(day) || { spend: 0, sales: 0 };
+      return {
+        date: day,
+        revenue: r.ordered_revenue || 0,
+        orders: r.orders || 0,
+        adSpend: ad.spend,
+        sessions: r.sessions || 0,
+      };
+    });
 
     const executiveSummary = `Renuv period summary: Revenue ${formatCurrency(currentRevenue, true)}, TACOS ${isFinite(currentTacos) ? formatPercent(currentTacos) : '—'}, conversion rate at ${formatPercent(currentCvr)}. ${currentTacos > 100 ? 'Note: Ad spend currently exceeds total revenue. This is common during aggressive growth phases.' : ''}`.trim();
 
@@ -213,6 +239,8 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
       executiveSummary,
       kpis,
       trendData,
+      organicRevenue: Math.max(currentRevenue - currentAdSales, 0),
+      ppcRevenue: currentAdSales,
       growthDrivers: [],
       risks: [],
       nextSteps: [],
@@ -232,6 +260,8 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
       executiveSummary: 'Unable to load client portal data.',
       kpis: [],
       trendData: [],
+      organicRevenue: 0,
+      ppcRevenue: 0,
       growthDrivers: [],
       risks: [],
       nextSteps: [],

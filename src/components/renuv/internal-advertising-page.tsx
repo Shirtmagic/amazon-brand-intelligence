@@ -8,6 +8,8 @@ import {
   type AdvertisingSnapshot,
 } from '@/lib/renuv-advertising';
 import { KpiLabel } from './metric-tooltip';
+import { AdvertisingChart } from './advertising-chart';
+import { RoasByCampaignChart, SpendMixDonut } from './campaign-charts';
 
 type Tone = 'positive' | 'negative' | 'neutral' | 'warning' | 'info' | 'critical' | 'active' | 'paused' | 'stale' | 'healthy' | 'degraded';
 type TrendDirection = 'up' | 'down' | 'flat';
@@ -91,6 +93,32 @@ export function RenuvInternalAdvertisingPage({ snapshot, brand }: { snapshot: Ad
               <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--blue-700)]">{kpi.sourceView}</p>
             </article>
           ))}
+        </section>
+
+        <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)]">
+          <Panel>
+            <SectionHeading eyebrow="30-day trend" title="Advertising performance over time" />
+            <p className="mt-3 mb-4 text-sm leading-6 text-[var(--ink-700)]">
+              Ad spend, attributed sales, and ROAS trend over the selected period.
+            </p>
+            <AdvertisingChart data={snapshot.chartData} />
+          </Panel>
+
+          <div className="space-y-4">
+            <Panel>
+              <SectionHeading eyebrow="ROAS by campaign" title="Campaign efficiency" />
+              <div className="mt-4">
+                <RoasByCampaignChart campaigns={snapshot.performance} />
+              </div>
+            </Panel>
+
+            <Panel>
+              <SectionHeading eyebrow="Channel mix" title="Spend by ad type" />
+              <div className="mt-4">
+                <SpendMixDonut spendMix={snapshot.spendMix} />
+              </div>
+            </Panel>
+          </div>
         </section>
 
         <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">

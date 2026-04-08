@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import type { AdvertisingSnapshot, AdvertisingKpi } from '@/lib/renuv-advertising';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
 import { KpiLabel } from './metric-tooltip';
+import { AdvertisingChart } from './advertising-chart';
 
 export function AdvertisingDetail({ snapshot, brand }: { snapshot: AdvertisingSnapshot; brand?: string }) {
   return (
@@ -42,13 +43,8 @@ export function AdvertisingDetail({ snapshot, brand }: { snapshot: AdvertisingSn
           <p className="mt-3 text-sm leading-6 text-[var(--ink-700)]">
             Advertising spend increased modestly while sales accelerated, driving sustained ROAS improvement throughout the period.
           </p>
-          <div className="mt-6 h-80 overflow-hidden rounded-[24px] border border-[var(--line-soft)] bg-gradient-to-br from-[rgba(94,168,255,0.04)] to-white p-4 sm:p-6">
-            <p className="text-center text-sm text-[var(--ink-600)]">
-              [Multi-line chart: Ad Spend, Ad Sales, ROAS over 30 days]
-            </p>
-            <p className="mt-3 text-center text-xs text-[var(--ink-500)]">
-              Chart showing {snapshot.chartData.length} daily data points with spend, sales, and ROAS trend
-            </p>
+          <div className="mt-6 overflow-hidden rounded-[24px] border border-[var(--line-soft)] bg-gradient-to-br from-[rgba(94,168,255,0.04)] to-white p-4 sm:p-6">
+            <AdvertisingChart data={snapshot.chartData} />
           </div>
         </section>
 

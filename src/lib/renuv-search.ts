@@ -75,6 +75,13 @@ export type Freshness = {
   lag: string;
   readiness: string;
   tone: 'positive' | 'neutral' | 'warning' | 'critical';
+  interpretation: string;
+};
+
+export type SearchFreshnessSummary = {
+  headline: string;
+  decisionReadiness: 'Ready for optimization' | 'Use with caution' | 'Delay major decisions';
+  overallTone: 'positive' | 'neutral' | 'warning' | 'critical';
 };
 
 export type SearchSnapshot = {
@@ -91,6 +98,7 @@ export type SearchSnapshot = {
   positionTracking: PositionTracking[];
   categoryRanks: CategoryRank[];
   freshness: Freshness[];
+  freshnessSummary?: SearchFreshnessSummary;
 };
 
 export const renuvSearchMock: SearchSnapshot = {
@@ -203,10 +211,14 @@ export const renuvSearchMock: SearchSnapshot = {
     { category: 'Silicone Scar Gel', currentRank: '#1', rankChange: '+2', topCompetitors: 'ScarAway, Dermatix', trafficShare: '22.1%', tone: 'positive' as const }
   ],
   freshness: [
-    { source: 'Search term report', updatedAt: '2026-03-31 23:45 UTC', lag: '< 1 day', readiness: 'Current', tone: 'positive' as const },
-    { source: 'Share of voice', updatedAt: '2026-03-31 12:00 UTC', lag: '< 1 day', readiness: 'Current', tone: 'positive' as const },
-    { source: 'Organic rank tracker', updatedAt: '2026-03-30 08:00 UTC', lag: '2 days', readiness: 'Acceptable', tone: 'neutral' as const }
-  ]
+    { source: 'Search Query Performance', updatedAt: '2026-03-31 23:45 UTC', lag: 'Current through Mar 31', readiness: 'Healthy', tone: 'positive' as const, interpretation: 'Use this source to judge query demand, click share, and search mix. Fresh enough for decision-making today.' },
+    { source: 'Brand Analytics / ASIN visibility', updatedAt: '2026-03-31 12:00 UTC', lag: 'Weekly, current through Mar 30', readiness: 'Healthy', tone: 'positive' as const, interpretation: 'Use this source to judge ASIN-level search visibility and relative share.' }
+  ],
+  freshnessSummary: {
+    headline: 'Search data is current enough to support query and visibility decisions today.',
+    decisionReadiness: 'Ready for optimization',
+    overallTone: 'positive' as const,
+  }
 };
 
 export const renuvSearchContracts = {

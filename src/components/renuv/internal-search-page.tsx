@@ -5,10 +5,12 @@ import { cn } from '@/lib/utils';
 import { internalRoute } from '@/lib/renuv-routes';
 import {
   renuvSearchContracts,
-  type SearchSnapshot
+  type SearchSnapshot,
+  type SearchFreshnessSummary,
 } from '@/lib/renuv-search';
 import { KpiLabel, MetricTooltip } from './metric-tooltip';
 import { SearchIntelligenceCard } from './search-intelligence-card';
+import { VisibilityTrendChart } from './search-charts';
 
 type Tone = 'positive' | 'negative' | 'neutral' | 'warning' | 'info' | 'critical' | 'active' | 'paused' | 'stale' | 'healthy' | 'degraded';
 type TrendDirection = 'up' | 'down' | 'flat';
@@ -137,6 +139,15 @@ export function RenuvInternalSearchPage({ snapshot, brand }: { snapshot: SearchS
 
         <section className="mb-6">
           <Panel>
+            <SectionHeading eyebrow="Visibility trends" title="ASIN search visibility" />
+            <p className="mb-4 text-sm leading-6 text-[var(--ink-700)]">Impression, click, and purchase share by ASIN from Brand Analytics data.</p>
+            <VisibilityTrendChart positions={snapshot.positionTracking} />
+            <SourceTag>ops_amazon.sp_ba_search_query_by_week_v1_view</SourceTag>
+          </Panel>
+        </section>
+
+        <section className="mb-6">
+          <Panel>
             <SectionHeading eyebrow="Position tracking" title="ASIN search position trends" />
             <DataTable
               columns={[
@@ -184,11 +195,32 @@ export function RenuvInternalSearchPage({ snapshot, brand }: { snapshot: SearchS
           <Panel>
             <SectionHeading eyebrow="Data freshness" title="Source health" />
             <p className="mb-4 text-sm leading-6 text-[var(--ink-700)]">This tells you whether the search data on this page is current enough to trust for decision-making right now.</p>
-            <div className="space-y-3">
+
+            {snapshot.freshnessSummary && (
+              <div className={cn(
+                'mb-5 rounded-[18px] border p-4',
+                snapshot.freshnessSummary.overallTone === 'positive' && 'border-[var(--green-200)] bg-[var(--green-50)]',
+                snapshot.freshnessSummary.overallTone === 'warning' && 'border-[var(--yellow-200)] bg-[var(--yellow-50)]',
+                snapshot.freshnessSummary.overallTone === 'critical' && 'border-[var(--red-200)] bg-[var(--red-50)]',
+                (!snapshot.freshnessSummary.overallTone || snapshot.freshnessSummary.overallTone === 'neutral') && 'border-[var(--line-soft)] bg-[var(--ink-25)]',
+              )}>
+                <p className="text-sm leading-6 text-[var(--ink-800)]">{snapshot.freshnessSummary.headline}</p>
+              </div>
+            )}
+
+            <div className="space-y-4">
               {snapshot.freshness.map((fresh, idx) => (
-                <FreshnessRow key={idx} freshness={fresh} />
+                <SourceHealthRow key={idx} freshness={fresh} />
               ))}
             </div>
+
+            {snapshot.freshnessSummary && (
+              <div className="mt-5 flex items-center gap-2 rounded-lg border border-[var(--line-soft)] bg-[var(--ink-25)] px-4 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ink-600)]">Decision readiness:</p>
+                <DecisionReadinessBadge readiness={snapshot.freshnessSummary.decisionReadiness} />
+              </div>
+            )}
+
             <SourceTag>reporting_amazon.data_freshness_status</SourceTag>
           </Panel>
         </section>
@@ -393,6 +425,50 @@ function FreshnessRow({ freshness }: { freshness: { source: string; updatedAt: s
         <span className="text-xs font-semibold text-[var(--ink-700)]">{freshness.readiness}</span>
       </div>
     </div>
+  );
+}
+
+function SourceHealthRow({ freshness }: { freshness: { source: string; updatedAt: string; lag: string; readiness: string; tone: Tone; interpretation?: string } }) {
+  const readinessStyles: Partial<Record<string, string>> = {
+    Healthy: 'bg-[var(--green-100)] text-[var(--green-800)]',
+    Warning: 'bg-[var(--yellow-100)] text-[var(--yellow-800)]',
+    Stale: 'bg-[var(--red-100)] text-[var(--red-800)]',
+  };
+
+  return (
+    <div className="rounded-xl border border-[var(--line-soft)] bg-[var(--ink-25)] p-4">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold text-[var(--ink-700)]">{freshness.source}</p>
+        <span className={cn('rounded-full px-2.5 py-1 text-[11px] font-semibold', readinessStyles[freshness.readiness] || 'bg-[var(--ink-100)] text-[var(--ink-700)]')}>
+          {freshness.readiness}
+        </span>
+      </div>
+      <div className="mb-3 grid grid-cols-2 gap-2 text-xs text-[var(--ink-700)]">
+        <div>
+          <span className="font-semibold">Last updated:</span> {freshness.updatedAt}
+        </div>
+        <div>
+          <span className="font-semibold">Lag:</span> {freshness.lag}
+        </div>
+      </div>
+      {freshness.interpretation && (
+        <p className="text-xs leading-5 text-[var(--ink-600)] italic">{freshness.interpretation}</p>
+      )}
+    </div>
+  );
+}
+
+function DecisionReadinessBadge({ readiness }: { readiness: SearchFreshnessSummary['decisionReadiness'] }) {
+  const styles: Record<string, string> = {
+    'Ready for optimization': 'bg-[var(--green-100)] text-[var(--green-800)]',
+    'Use with caution': 'bg-[var(--yellow-100)] text-[var(--yellow-800)]',
+    'Delay major decisions': 'bg-[var(--red-100)] text-[var(--red-800)]',
+  };
+
+  return (
+    <span className={cn('rounded-full px-3 py-1 text-[11px] font-semibold', styles[readiness])}>
+      {readiness}
+    </span>
   );
 }
 

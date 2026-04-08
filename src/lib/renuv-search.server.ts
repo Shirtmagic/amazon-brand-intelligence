@@ -2,7 +2,7 @@
  * Server-only fetch functions for search data
  */
 import { queryBigQuery, formatCurrency } from './bigquery';
-import { SearchSnapshot, Diagnostic, PositionTracking, CategoryRank } from './renuv-search';
+import { SearchSnapshot, Diagnostic, PositionTracking, CategoryRank, Freshness, SearchFreshnessSummary } from './renuv-search';
 import { sanitizeDateParam } from './date-utils';
 
 /**
@@ -379,6 +379,160 @@ async function fetchCategoryPerformance(): Promise<CategoryRank[]> {
   }
 }
 
+/**
+ * Fetch freshness for the two search-specific data sources:
+ * 1. Search Query Performance (paid search terms from SP ads)
+ * 2. Brand Analytics / ASIN visibility (BA weekly views)
+ */
+async function fetchSearchFreshness(): Promise<{ freshness: Freshness[]; freshnessSummary: SearchFreshnessSummary }> {
+  try {
+    const sql = `
+      SELECT
+        source_table,
+        last_seen_record_date,
+        days_stale,
+        freshness_status
+      FROM \`renuv-amazon-data-warehouse.reporting_amazon.data_freshness_status\`
+      WHERE LOWER(source_table) LIKE '%search%'
+         OR LOWER(source_table) LIKE '%ba_%'
+         OR LOWER(source_table) LIKE '%brand_analytics%'
+      ORDER BY source_table
+    `;
+
+    const rows = await queryBigQuery<any>(sql);
+
+    if (rows.length === 0) {
+      // Derive freshness from the actual data tables as fallback
+      const fallbackSql = `
+        SELECT
+          'Search Query Performance' AS source_label,
+          MAX(DATE(date)) AS last_date,
+          DATE_DIFF(CURRENT_DATE(), MAX(DATE(date)), DAY) AS days_behind
+        FROM (
+          SELECT date FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sp_search_terms_v2_view\`
+          WHERE DATE(date) >= DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY)
+          LIMIT 1000
+        )
+        UNION ALL
+        SELECT
+          'Brand Analytics / ASIN visibility' AS source_label,
+          MAX(end_date) AS last_date,
+          DATE_DIFF(CURRENT_DATE(), MAX(end_date), DAY) AS days_behind
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\`
+        WHERE ob_seller_id = 'A2CWSK2O443P17'
+      `;
+
+      const fallbackRows = await queryBigQuery<any>(fallbackSql);
+      return buildFreshnessFromRows(fallbackRows);
+    }
+
+    // Map freshness status rows to our two logical sources
+    const searchRows = rows.filter((r: any) => {
+      const name = (r.source_table || '').toLowerCase();
+      return name.includes('search_term') || name.includes('sp_search');
+    });
+    const baRows = rows.filter((r: any) => {
+      const name = (r.source_table || '').toLowerCase();
+      return name.includes('ba_') || name.includes('brand_analytics');
+    });
+
+    const mapped: any[] = [];
+    if (searchRows.length > 0) {
+      const worst = searchRows.reduce((a: any, b: any) => ((a.days_stale || 0) > (b.days_stale || 0) ? a : b));
+      mapped.push({ source_label: 'Search Query Performance', last_date: worst.last_seen_record_date, days_behind: worst.days_stale || 0 });
+    }
+    if (baRows.length > 0) {
+      const worst = baRows.reduce((a: any, b: any) => ((a.days_stale || 0) > (b.days_stale || 0) ? a : b));
+      mapped.push({ source_label: 'Brand Analytics / ASIN visibility', last_date: worst.last_seen_record_date, days_behind: worst.days_stale || 0 });
+    }
+
+    return buildFreshnessFromRows(mapped);
+  } catch (error) {
+    console.error('[fetchSearchFreshness] Error:', error);
+    return {
+      freshness: [],
+      freshnessSummary: {
+        headline: 'Unable to determine data freshness. Treat insights as directional.',
+        decisionReadiness: 'Use with caution',
+        overallTone: 'warning',
+      },
+    };
+  }
+}
+
+function buildFreshnessFromRows(rows: any[]): { freshness: Freshness[]; freshnessSummary: SearchFreshnessSummary } {
+  const freshness: Freshness[] = rows.map((r: any) => {
+    const daysBehind = Number(r.days_behind || 0);
+    const lastDate = r.last_date?.value || r.last_date || '';
+    const dateStr = lastDate ? new Date(lastDate).toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : 'Unknown';
+    const isBA = (r.source_label || '').includes('Brand Analytics');
+
+    let readiness: string;
+    let tone: 'positive' | 'neutral' | 'warning' | 'critical';
+    let interpretation: string;
+
+    if (daysBehind <= 1) {
+      readiness = 'Healthy';
+      tone = 'positive';
+      interpretation = isBA
+        ? 'Use this source to judge ASIN-level search visibility and relative share.'
+        : 'Use this source to judge query demand, click share, and search mix. Fresh enough for decision-making today.';
+    } else if (daysBehind <= 3) {
+      readiness = 'Warning';
+      tone = 'warning';
+      interpretation = isBA
+        ? 'This source is lagging, so ASIN visibility insights may not reflect the most recent demand shift.'
+        : 'Data is delayed, so treat query movement as directional rather than exact.';
+    } else {
+      readiness = 'Stale';
+      tone = 'critical';
+      interpretation = isBA
+        ? 'Brand Analytics data is significantly stale. Do not rely on ASIN visibility metrics for current decisions.'
+        : 'Search query data is significantly stale. Delay optimization decisions until data refreshes.';
+    }
+
+    const lagLabel = daysBehind === 0
+      ? 'Current'
+      : daysBehind === 1
+        ? `1 day behind`
+        : `${daysBehind} days behind`;
+
+    return {
+      source: r.source_label || 'Unknown',
+      updatedAt: dateStr,
+      lag: lagLabel,
+      readiness,
+      tone,
+      interpretation,
+    };
+  });
+
+  // Determine overall summary
+  const worstTone = freshness.reduce<'positive' | 'neutral' | 'warning' | 'critical'>((worst, f) => {
+    const rank = { positive: 0, neutral: 1, warning: 2, critical: 3 } as const;
+    return rank[f.tone] > rank[worst] ? f.tone : worst;
+  }, 'positive');
+
+  let headline: string;
+  let decisionReadiness: SearchFreshnessSummary['decisionReadiness'];
+
+  if (worstTone === 'positive') {
+    headline = 'Search data is current enough to support query and visibility decisions today.';
+    decisionReadiness = 'Ready for optimization';
+  } else if (worstTone === 'warning') {
+    headline = 'Search data is partially delayed, so use this page for directional insight rather than precise optimization.';
+    decisionReadiness = 'Use with caution';
+  } else {
+    headline = 'Search data is significantly stale. Delay major optimization decisions until sources refresh.';
+    decisionReadiness = 'Delay major decisions';
+  }
+
+  return {
+    freshness,
+    freshnessSummary: { headline, decisionReadiness, overallTone: worstTone },
+  };
+}
+
 export async function fetchSearchSnapshot(startDate?: string, endDate?: string): Promise<SearchSnapshot> {
   const sd = startDate ? sanitizeDateParam(startDate) : undefined;
   const ed = endDate ? sanitizeDateParam(endDate) : undefined;
@@ -541,7 +695,8 @@ export async function fetchSearchSnapshot(startDate?: string, endDate?: string):
       // Brand Analytics data from BigQuery
       positionTracking: await fetchPositionTracking(),
       categoryRanks: await fetchCategoryPerformance(),
-      freshness: [],
+      // Source freshness from BigQuery
+      ...(await fetchSearchFreshness()),
     };
   } catch (error) {
     console.error('[fetchSearchSnapshot] Failed:', error);

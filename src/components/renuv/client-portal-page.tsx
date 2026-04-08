@@ -10,6 +10,7 @@ import { ReviewExportControls } from './review-export-controls';
 import type { ExportFormat } from '@/lib/renuv-export';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
 import { KpiLabel } from './metric-tooltip';
+import { ClientTrendChart, OrganicPpcDonut } from './client-portal-charts';
 
 export interface RenuvClientPortalPageProps {
   snapshot: ClientPortalSnapshot;
@@ -103,10 +104,17 @@ export function RenuvClientPortalPage({ snapshot, hideControls = false, brand }:
           <p className="mt-3 text-sm leading-6 text-[var(--ink-700)]">
             Revenue and order volume showed consistent growth throughout the period with strong week-over-week momentum. Advertising spend increased modestly while efficiency improved.
           </p>
-          <div className="mt-6 flex h-64 items-center justify-center overflow-x-auto rounded-[24px] border border-[var(--line-soft)] bg-gradient-to-br from-[rgba(94,168,255,0.04)] to-white p-4 sm:p-6">
-            <p className="text-center text-sm text-[var(--ink-600)]">
-              Performance trends shown in detailed reports
-            </p>
+          <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)]">
+            <div className="overflow-hidden rounded-[24px] border border-[var(--line-soft)] bg-gradient-to-br from-[rgba(94,168,255,0.04)] to-white p-4 sm:p-6">
+              <ClientTrendChart data={snapshot.trendData} />
+            </div>
+            <div className="rounded-[24px] border border-[var(--line-soft)] bg-gradient-to-br from-[rgba(94,168,255,0.04)] to-white p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-600)]">Revenue attribution</p>
+              <h3 className="mt-2 text-lg font-semibold text-[var(--ink-950)]">Organic vs PPC</h3>
+              <div className="mt-4">
+                <OrganicPpcDonut organicRevenue={snapshot.organicRevenue} ppcRevenue={snapshot.ppcRevenue} />
+              </div>
+            </div>
           </div>
         </section>
 
