@@ -315,7 +315,6 @@ function BSRTrendChart({ trend, productName }: { trend: BSREntry['trend']; produ
             interval={Math.max(0, Math.floor(data.length / 6))}
           />
           <YAxis
-            reversed
             tick={{ fontSize: 10 }}
             tickFormatter={(v: number) => `#${v.toLocaleString()}`}
             width={65}
@@ -335,7 +334,7 @@ function BSRTrendChart({ trend, productName }: { trend: BSREntry['trend']; produ
           />
         </LineChart>
       </ResponsiveContainer>
-      <p className="mt-1 text-[10px] text-[var(--ink-500)]">Lower rank = better. Chart Y-axis is inverted.</p>
+      <p className="mt-1 text-[10px] text-[var(--ink-500)]">Lower rank = better. Line trending down means improving sales velocity.</p>
     </div>
   );
 }
