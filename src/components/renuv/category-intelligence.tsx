@@ -450,33 +450,6 @@ export function CategoryIntelligenceSection({ data }: { data: CategoryIntelligen
 
   return (
     <div className="space-y-6">
-      {/* Product filter dropdown */}
-      {data.asinOptions && data.asinOptions.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-600)]">View by product</label>
-          <select
-            value={selectedAsin}
-            onChange={(e) => { setSelectedAsin(e.target.value); setShowAll(false); }}
-            className="h-9 rounded-xl border border-[var(--line-soft)] bg-white px-3 pr-8 text-sm text-[var(--ink-900)] shadow-sm outline-none focus:border-[var(--blue-700)] cursor-pointer"
-          >
-            <option value="all">All products (account-wide)</option>
-            {data.asinOptions.map(opt => (
-              <option key={opt.asin} value={opt.asin}>
-                {truncate(opt.productName, 60)} ({opt.asin}) — {opt.totalPurchases} purchases, {opt.totalClicks} clicks
-              </option>
-            ))}
-          </select>
-          {isFiltered && (
-            <button
-              onClick={() => setSelectedAsin('all')}
-              className="text-xs font-semibold text-[var(--blue-700)] hover:underline"
-            >
-              Clear filter
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Headline + summary stats */}
       <div className="rounded-[24px] border border-[rgba(94,168,255,0.14)] bg-[linear-gradient(135deg,rgba(94,168,255,0.08),rgba(255,255,255,0.96))] p-5">
         <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--ink-950)]">
@@ -513,6 +486,33 @@ export function CategoryIntelligenceSection({ data }: { data: CategoryIntelligen
           highlight={convEdge >= 1.2 ? 'positive' : convEdge >= 0.8 ? 'neutral' : 'warning'}
         />
       </div>
+
+      {/* Product filter dropdown — between KPI cards and momentum bar */}
+      {data.asinOptions && data.asinOptions.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-600)]">View by product</label>
+          <select
+            value={selectedAsin}
+            onChange={(e) => { setSelectedAsin(e.target.value); setShowAll(false); }}
+            className="h-9 rounded-xl border border-[var(--line-soft)] bg-white px-3 pr-8 text-sm text-[var(--ink-900)] shadow-sm outline-none focus:border-[var(--blue-700)] cursor-pointer"
+          >
+            <option value="all">All products (account-wide)</option>
+            {data.asinOptions.map(opt => (
+              <option key={opt.asin} value={opt.asin}>
+                {truncate(opt.productName, 60)} ({opt.asin}) — {opt.totalPurchases} purchases, {opt.totalClicks} clicks
+              </option>
+            ))}
+          </select>
+          {isFiltered && (
+            <button
+              onClick={() => setSelectedAsin('all')}
+              className="text-xs font-semibold text-[var(--blue-700)] hover:underline"
+            >
+              Clear filter
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Momentum bar */}
       <div className="flex flex-wrap items-center gap-3">
