@@ -413,46 +413,104 @@ function BSRTable({ entries }: { entries: BSREntry[] }) {
 
 export function CategoryIntelligenceSection({ data }: { data: CategoryIntelligence }) {
   const [showAll, setShowAll] = useState(false);
-  const displayQueries = showAll ? data.queryShares : data.queryShares.slice(0, 10);
+  const [selectedAsin, setSelectedAsin] = useState<string>('all');
 
-  const gainingCount = data.queryShares.filter(q => q.weekOverWeekClickChange > 0.01).length;
-  const losingCount = data.queryShares.filter(q => q.weekOverWeekClickChange < -0.01).length;
-  const stableCount = data.queryShares.length - gainingCount - losingCount;
+  // Determine which data to display based on dropdown selection
+  const isFiltered = selectedAsin !== 'all';
+  const activeQueryShares = isFiltered
+    ? (data.perAsinQueryShares?.[selectedAsin] || [])
+    : data.queryShares;
+  const activeTrends = isFiltered
+    ? (data.perAsinTrends?.[selectedAsin] || [])
+    : data.shareTrends;
+
+  const displayQueries = showAll ? activeQueryShares : activeQueryShares.slice(0, 10);
+
+  // Recalculate summary stats for active dataset
+  const avgImpShare = activeQueryShares.length > 0
+    ? activeQueryShares.reduce((s, q) => s + q.ourImpressionShare, 0) / activeQueryShares.length : 0;
+  const avgClickShare = activeQueryShares.length > 0
+    ? activeQueryShares.reduce((s, q) => s + q.ourClickShare, 0) / activeQueryShares.length : 0;
+  const avgPurchShare = activeQueryShares.length > 0
+    ? activeQueryShares.reduce((s, q) => s + q.ourPurchaseShare, 0) / activeQueryShares.length : 0;
+  const convEdge = avgClickShare > 0 ? avgPurchShare / avgClickShare : 0;
+
+  const gainingCount = activeQueryShares.filter(q => q.weekOverWeekClickChange > 0.01).length;
+  const losingCount = activeQueryShares.filter(q => q.weekOverWeekClickChange < -0.01).length;
+  const stableCount = activeQueryShares.length - gainingCount - losingCount;
+
+  const selectedLabel = isFiltered
+    ? (data.asinOptions?.find(a => a.asin === selectedAsin)?.productName || selectedAsin)
+    : 'All products';
+
+  // Truncate product name for display
+  function truncate(name: string, max: number) {
+    return name.length > max ? name.slice(0, max) + '...' : name;
+  }
 
   return (
     <div className="space-y-6">
+      {/* Product filter dropdown */}
+      {data.asinOptions && data.asinOptions.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-600)]">View by product</label>
+          <select
+            value={selectedAsin}
+            onChange={(e) => { setSelectedAsin(e.target.value); setShowAll(false); }}
+            className="h-9 rounded-xl border border-[var(--line-soft)] bg-white px-3 pr-8 text-sm text-[var(--ink-900)] shadow-sm outline-none focus:border-[var(--blue-700)] cursor-pointer"
+          >
+            <option value="all">All products (account-wide)</option>
+            {data.asinOptions.map(opt => (
+              <option key={opt.asin} value={opt.asin}>
+                {truncate(opt.productName, 60)} ({opt.asin}) — {opt.totalPurchases} purchases, {opt.totalClicks} clicks
+              </option>
+            ))}
+          </select>
+          {isFiltered && (
+            <button
+              onClick={() => setSelectedAsin('all')}
+              className="text-xs font-semibold text-[var(--blue-700)] hover:underline"
+            >
+              Clear filter
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Headline + summary stats */}
       <div className="rounded-[24px] border border-[rgba(94,168,255,0.14)] bg-[linear-gradient(135deg,rgba(94,168,255,0.08),rgba(255,255,255,0.96))] p-5">
-        <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--ink-950)]">{data.headline}</h3>
+        <h3 className="text-base font-semibold tracking-[-0.02em] text-[var(--ink-950)]">
+          {isFiltered ? `${truncate(selectedLabel, 50)} — ${activeQueryShares.length} tracked queries` : data.headline}
+        </h3>
         <p className="mt-2 text-sm text-[var(--ink-700)]">{data.weekLabel}</p>
       </div>
 
-      {/* Summary KPI cards */}
+      {/* Summary KPI cards — recalculated for selection */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard
           label="Avg impression share"
-          value={pct(data.avgImpressionShare)}
-          detail={`Competitors: ${pct(1 - data.avgImpressionShare)}`}
+          value={pct(avgImpShare)}
+          detail={`Competitors: ${pct(1 - avgImpShare)}`}
         />
         <SummaryCard
           label="Avg click share"
-          value={pct(data.avgClickShare)}
-          detail={`Competitors: ${pct(1 - data.avgClickShare)}`}
+          value={pct(avgClickShare)}
+          detail={`Competitors: ${pct(1 - avgClickShare)}`}
         />
         <SummaryCard
           label="Avg purchase share"
-          value={pct(data.avgPurchaseShare)}
-          detail={`Competitors: ${pct(1 - data.avgPurchaseShare)}`}
+          value={pct(avgPurchShare)}
+          detail={`Competitors: ${pct(1 - avgPurchShare)}`}
         />
         <SummaryCard
           label="Conversion edge"
-          value={data.overallConversionEdge > 0 ? `${(data.overallConversionEdge * 100).toFixed(0)}%` : '—'}
+          value={convEdge > 0 ? `${(convEdge * 100).toFixed(0)}%` : '—'}
           detail={
-            data.overallConversionEdge >= 1.2 ? 'You convert better than field avg'
-              : data.overallConversionEdge >= 0.8 ? 'At parity with competitors'
+            convEdge >= 1.2 ? 'You convert better than field avg'
+              : convEdge >= 0.8 ? 'At parity with competitors'
                 : 'Competitors converting better'
           }
-          highlight={data.overallConversionEdge >= 1.2 ? 'positive' : data.overallConversionEdge >= 0.8 ? 'neutral' : 'warning'}
+          highlight={convEdge >= 1.2 ? 'positive' : convEdge >= 0.8 ? 'neutral' : 'warning'}
         />
       </div>
 
@@ -475,13 +533,18 @@ export function CategoryIntelligenceSection({ data }: { data: CategoryIntelligen
         )}
       </div>
 
-      {/* Share trends chart — full width */}
+      {/* Share trends chart — uses active dataset */}
       <div>
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-600)]">Share trend — last {data.shareTrends.length} weeks</p>
-        <ShareTrendChart trends={data.shareTrends} />
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-600)]">
+          Share trend — last {activeTrends.length} weeks{isFiltered ? ` · ${truncate(selectedLabel, 30)}` : ''}
+        </p>
+        <ShareTrendChart trends={activeTrends} />
         <p className="mt-2 text-[11px] text-[var(--ink-600)]">
-          Shows your average impression, click, and purchase share across all tracked search queries each week.
-          If purchase share is above click share, you convert better than the market average.
+          {isFiltered
+            ? `Shows this product's average impression, click, and purchase share each week.`
+            : 'Shows your average impression, click, and purchase share across all tracked search queries each week.'
+          }
+          {' '}If purchase share is above click share, you convert better than the market average.
         </p>
       </div>
 
@@ -518,12 +581,12 @@ export function CategoryIntelligenceSection({ data }: { data: CategoryIntelligen
           </div>
           <div className="border-t border-[var(--line-soft)] bg-[var(--panel-muted)] px-4 py-3 flex items-center justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--blue-700)]">{data.sourceView}</p>
-            {data.queryShares.length > 10 && (
+            {activeQueryShares.length > 10 && (
               <button
                 onClick={() => setShowAll(!showAll)}
                 className="text-xs font-semibold text-[var(--blue-700)] hover:underline"
               >
-                {showAll ? 'Show fewer' : `Show all ${data.queryShares.length} queries`}
+                {showAll ? 'Show fewer' : `Show all ${activeQueryShares.length} queries`}
               </button>
             )}
           </div>
@@ -534,13 +597,13 @@ export function CategoryIntelligenceSection({ data }: { data: CategoryIntelligen
           {displayQueries.map(q => (
             <QueryCard key={q.searchQuery} q={q} />
           ))}
-          {data.queryShares.length > 10 && (
+          {activeQueryShares.length > 10 && (
             <div className="border-t border-[var(--line-soft)] bg-[var(--panel-muted)] px-4 py-3 text-center">
               <button
                 onClick={() => setShowAll(!showAll)}
                 className="text-xs font-semibold text-[var(--blue-700)] hover:underline"
               >
-                {showAll ? 'Show fewer' : `Show all ${data.queryShares.length} queries`}
+                {showAll ? 'Show fewer' : `Show all ${activeQueryShares.length} queries`}
               </button>
             </div>
           )}

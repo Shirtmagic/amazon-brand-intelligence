@@ -115,6 +115,14 @@ export type CategoryShareTrend = {
   totalPurchases: number;
 };
 
+/** ASIN option for the product filter dropdown */
+export type AsinOption = {
+  asin: string;
+  productName: string;
+  totalClicks: number;
+  totalPurchases: number;
+};
+
 /** Full category intelligence container */
 export type CategoryIntelligence = {
   headline: string;
@@ -127,6 +135,12 @@ export type CategoryIntelligence = {
   shareTrends: CategoryShareTrend[];
   weekLabel: string;
   sourceView: string;
+  /** Top-selling ASINs for the product filter dropdown */
+  asinOptions: AsinOption[];
+  /** Per-ASIN query shares, keyed by ASIN */
+  perAsinQueryShares: Record<string, CategoryShareQuery[]>;
+  /** Per-ASIN share trends, keyed by ASIN */
+  perAsinTrends: Record<string, CategoryShareTrend[]>;
 };
 
 export type Freshness = {

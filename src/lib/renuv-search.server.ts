@@ -543,11 +543,126 @@ async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undef
       ORDER BY h.asin, h.ob_date ASC
     `;
 
-    const [shareRows, trendRows, bsrRows, bsrTrendRows] = await Promise.all([
+    // Query 5: Per-ASIN query shares (not aggregated) for the product dropdown
+    const perAsinShareSql = `
+      WITH latest_week AS (
+        SELECT MAX(end_date) AS max_week
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\`
+        WHERE ob_seller_id = 'A2CWSK2O443P17'
+      ),
+      top_asins AS (
+        SELECT asin, SUM(click_data_asin_click_count) AS total_clicks, SUM(purchase_data_asin_purchase_count) AS total_purchases
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\`
+        CROSS JOIN latest_week
+        WHERE ob_seller_id = 'A2CWSK2O443P17' AND end_date = latest_week.max_week
+        GROUP BY asin
+        HAVING SUM(click_data_asin_click_count) >= 5 OR SUM(purchase_data_asin_purchase_count) >= 1
+        ORDER BY total_purchases DESC, total_clicks DESC
+        LIMIT 10
+      ),
+      current_per_asin AS (
+        SELECT
+          ba.asin,
+          ba.search_query_data_search_query AS search_query,
+          MAX(ba.search_query_data_search_query_volume) AS query_volume,
+          ba.impression_data_asin_impression_share AS our_impression_share,
+          ba.click_data_asin_click_share AS our_click_share,
+          ba.purchase_data_asin_purchase_share AS our_purchase_share,
+          ba.impression_data_asin_impression_count AS our_impressions,
+          ba.click_data_asin_click_count AS our_clicks,
+          ba.purchase_data_asin_purchase_count AS our_purchases
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\` ba
+        CROSS JOIN latest_week
+        INNER JOIN top_asins ta ON ba.asin = ta.asin
+        WHERE ba.ob_seller_id = 'A2CWSK2O443P17' AND ba.end_date = latest_week.max_week
+          AND (ba.click_data_asin_click_count >= 3 OR ba.purchase_data_asin_purchase_count >= 1)
+        GROUP BY ba.asin, ba.search_query_data_search_query,
+          ba.impression_data_asin_impression_share, ba.click_data_asin_click_share,
+          ba.purchase_data_asin_purchase_share, ba.impression_data_asin_impression_count,
+          ba.click_data_asin_click_count, ba.purchase_data_asin_purchase_count
+      ),
+      prior_per_asin AS (
+        SELECT
+          ba.asin,
+          ba.search_query_data_search_query AS search_query,
+          ba.impression_data_asin_impression_share AS prior_impression_share,
+          ba.click_data_asin_click_share AS prior_click_share,
+          ba.purchase_data_asin_purchase_share AS prior_purchase_share
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\` ba
+        CROSS JOIN latest_week
+        INNER JOIN top_asins ta ON ba.asin = ta.asin
+        WHERE ba.ob_seller_id = 'A2CWSK2O443P17'
+          AND ba.end_date = DATE_SUB(latest_week.max_week, INTERVAL 7 DAY)
+      )
+      SELECT
+        c.asin,
+        c.search_query,
+        c.query_volume,
+        c.our_impression_share,
+        c.our_click_share,
+        c.our_purchase_share,
+        c.our_impressions,
+        c.our_clicks,
+        c.our_purchases,
+        COALESCE(p.prior_impression_share, 0) AS prior_impression_share,
+        COALESCE(p.prior_click_share, 0) AS prior_click_share,
+        COALESCE(p.prior_purchase_share, 0) AS prior_purchase_share
+      FROM current_per_asin c
+      LEFT JOIN prior_per_asin p ON c.asin = p.asin AND c.search_query = p.search_query
+      ORDER BY c.asin, c.our_purchases DESC, c.our_clicks DESC
+    `;
+
+    // Query 6: Per-ASIN share trends over last 8 weeks
+    const perAsinTrendSql = `
+      WITH weeks AS (
+        SELECT DISTINCT end_date
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\`
+        WHERE ob_seller_id = 'A2CWSK2O443P17'
+        ORDER BY end_date DESC
+        LIMIT 8
+      ),
+      top_asins AS (
+        SELECT asin
+        FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\`
+        WHERE ob_seller_id = 'A2CWSK2O443P17'
+          AND end_date = (SELECT MAX(end_date) FROM weeks)
+        GROUP BY asin
+        HAVING SUM(click_data_asin_click_count) >= 5 OR SUM(purchase_data_asin_purchase_count) >= 1
+        ORDER BY SUM(purchase_data_asin_purchase_count) DESC, SUM(click_data_asin_click_count) DESC
+        LIMIT 10
+      )
+      SELECT
+        ba.asin,
+        CAST(ba.end_date AS STRING) AS week_ending,
+        AVG(ba.impression_data_asin_impression_share) AS avg_impression_share,
+        AVG(ba.click_data_asin_click_share) AS avg_click_share,
+        AVG(ba.purchase_data_asin_purchase_share) AS avg_purchase_share,
+        SUM(ba.impression_data_asin_impression_count) AS total_impressions,
+        SUM(ba.click_data_asin_click_count) AS total_clicks,
+        SUM(ba.purchase_data_asin_purchase_count) AS total_purchases
+      FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\` ba
+      INNER JOIN top_asins ta ON ba.asin = ta.asin
+      WHERE ba.ob_seller_id = 'A2CWSK2O443P17'
+        AND ba.end_date IN (SELECT end_date FROM weeks)
+      GROUP BY ba.asin, ba.end_date
+      ORDER BY ba.asin, ba.end_date ASC
+    `;
+
+    // Query 7: ASIN product names for dropdown labels
+    const asinNamesSql = `
+      SELECT asin, product_name
+      FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`
+      WHERE ob_date = (SELECT MAX(ob_date) FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24\`)
+    `;
+
+    const [shareRows, trendRows, bsrRows, bsrTrendRows, perAsinShareRows, perAsinTrendRows, asinNameRows] = await Promise.all([
       queryBigQuery<any>(queryShareSql),
       queryBigQuery<any>(trendSql),
       queryBigQuery<any>(bsrSql),
       queryBigQuery<any>(bsrTrendSql),
+      queryBigQuery<any>(perAsinShareSql),
+      queryBigQuery<any>(perAsinTrendSql),
+      queryBigQuery<any>(asinNamesSql),
     ]);
 
     if (shareRows.length === 0 && trendRows.length === 0 && bsrRows.length === 0) {
@@ -659,6 +774,87 @@ async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undef
       headline = `Mixed competitive signals across ${queryShares.length} tracked queries — ${gainingCount} gaining, ${losingCount} losing`;
     }
 
+    // Build ASIN name lookup
+    const asinNameMap = new Map<string, string>();
+    for (const r of asinNameRows) {
+      if (r.asin && r.product_name) asinNameMap.set(r.asin, r.product_name);
+    }
+
+    // Process per-ASIN query shares — same /100 normalization
+    const perAsinQueryShares: Record<string, CategoryShareQuery[]> = {};
+    const asinClickTotals = new Map<string, { clicks: number; purchases: number }>();
+
+    for (const r of perAsinShareRows) {
+      const asin = r.asin || '';
+      const ourImpShare = Number(r.our_impression_share || 0) / 100;
+      const ourClickShare = Number(r.our_click_share || 0) / 100;
+      const ourPurchShare = Number(r.our_purchase_share || 0) / 100;
+      const priorImpShare = Number(r.prior_impression_share || 0) / 100;
+      const priorClickShare = Number(r.prior_click_share || 0) / 100;
+      const priorPurchShare = Number(r.prior_purchase_share || 0) / 100;
+      const conversionEdge = ourClickShare > 0 ? (ourPurchShare / ourClickShare) : 0;
+      const impChange = ourImpShare - priorImpShare;
+      const clickChange = ourClickShare - priorClickShare;
+      const purchChange = ourPurchShare - priorPurchShare;
+
+      let tone: 'positive' | 'neutral' | 'warning' | 'critical' = 'neutral';
+      if (clickChange > 0.02 && purchChange >= 0) tone = 'positive';
+      else if (clickChange < -0.02 || purchChange < -0.03) tone = 'warning';
+
+      if (!perAsinQueryShares[asin]) perAsinQueryShares[asin] = [];
+      perAsinQueryShares[asin].push({
+        searchQuery: r.search_query || '',
+        queryVolume: Number(r.query_volume || 0),
+        ourImpressionShare: ourImpShare,
+        ourClickShare: ourClickShare,
+        ourPurchaseShare: ourPurchShare,
+        competitorImpressionShare: Math.max(0, 1 - ourImpShare),
+        competitorClickShare: Math.max(0, 1 - ourClickShare),
+        competitorPurchaseShare: Math.max(0, 1 - ourPurchShare),
+        weekOverWeekImpressionChange: impChange,
+        weekOverWeekClickChange: clickChange,
+        weekOverWeekPurchaseChange: purchChange,
+        conversionEdge,
+        ourImpressions: Number(r.our_impressions || 0),
+        ourClicks: Number(r.our_clicks || 0),
+        ourPurchases: Number(r.our_purchases || 0),
+        tone,
+      });
+
+      // Accumulate totals for ASIN options
+      const existing = asinClickTotals.get(asin) || { clicks: 0, purchases: 0 };
+      existing.clicks += Number(r.our_clicks || 0);
+      existing.purchases += Number(r.our_purchases || 0);
+      asinClickTotals.set(asin, existing);
+    }
+
+    // Process per-ASIN trends
+    const perAsinTrends: Record<string, CategoryShareTrend[]> = {};
+    for (const r of perAsinTrendRows) {
+      const asin = r.asin || '';
+      const weekEnding = r.week_ending?.value || r.week_ending || '';
+      if (!perAsinTrends[asin]) perAsinTrends[asin] = [];
+      perAsinTrends[asin].push({
+        weekEnding,
+        avgImpressionShare: Number(r.avg_impression_share || 0) / 100,
+        avgClickShare: Number(r.avg_click_share || 0) / 100,
+        avgPurchaseShare: Number(r.avg_purchase_share || 0) / 100,
+        totalImpressions: Number(r.total_impressions || 0),
+        totalClicks: Number(r.total_clicks || 0),
+        totalPurchases: Number(r.total_purchases || 0),
+      });
+    }
+
+    // Build ASIN options sorted by purchases then clicks
+    const asinOptions = Array.from(asinClickTotals.entries())
+      .map(([asin, totals]) => ({
+        asin,
+        productName: asinNameMap.get(asin) || asin,
+        totalClicks: totals.clicks,
+        totalPurchases: totals.purchases,
+      }))
+      .sort((a, b) => b.totalPurchases - a.totalPurchases || b.totalClicks - a.totalClicks);
+
     return {
       headline,
       avgImpressionShare: avgImpShare,
@@ -670,6 +866,9 @@ async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undef
       shareTrends,
       weekLabel,
       sourceView: 'ops_amazon.sp_ba_search_query_by_week_v1_view + ops_amazon.sp_fba_manage_inventory_health_v24',
+      asinOptions,
+      perAsinQueryShares,
+      perAsinTrends,
     };
   } catch (error) {
     console.error('[fetchCategoryIntelligence] Error:', error);
