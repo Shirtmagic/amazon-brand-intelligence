@@ -67,10 +67,10 @@ export async function fetchPerformanceSnapshot(startDate?: string, endDate?: str
       : kpiRows.slice(0, 30);
 
     // Calculate aggregated KPIs
-    const currentRevenue = currentPeriod.reduce((sum, r) => sum + (r.ordered_revenue || 0), 0);
-    const currentOrders = currentPeriod.reduce((sum, r) => sum + (r.orders || 0), 0);
-    const currentUnits = currentPeriod.reduce((sum, r) => sum + (r.units_ordered || 0), 0);
-    const currentSessions = currentPeriod.reduce((sum, r) => sum + (r.sessions || 0), 0);
+    const currentRevenue = currentPeriod.reduce((sum, r) => sum + Number(r.ordered_revenue || 0), 0);
+    const currentOrders = currentPeriod.reduce((sum, r) => sum + Number(r.orders || 0), 0);
+    const currentUnits = currentPeriod.reduce((sum, r) => sum + Number(r.units_ordered || 0), 0);
+    const currentSessions = currentPeriod.reduce((sum, r) => sum + Number(r.sessions || 0), 0);
     const currentCvr = currentSessions > 0 ? (currentOrders / currentSessions) * 100 : 0;
     const currentAov = currentOrders > 0 ? currentRevenue / currentOrders : 0;
 
@@ -134,11 +134,11 @@ export async function fetchPerformanceSnapshot(startDate?: string, endDate?: str
     // Chart data (reverse chronological to ascending)
     const chartData: PerformanceChartDataPoint[] = [...currentPeriod].reverse().map(r => ({
       date: typeof r.date_day === 'object' ? r.date_day.value : r.date_day,
-      revenue: r.ordered_revenue || 0,
-      orders: r.orders || 0,
-      unitsSold: r.units_ordered || 0,
-      sessions: r.sessions || 0,
-      conversionRate: r.conversion_rate ? r.conversion_rate * 100 : 0
+      revenue: Number(r.ordered_revenue || 0),
+      orders: Number(r.orders || 0),
+      unitsSold: Number(r.units_ordered || 0),
+      sessions: Number(r.sessions || 0),
+      conversionRate: Number(r.conversion_rate || 0) * 100
     }));
 
     return {

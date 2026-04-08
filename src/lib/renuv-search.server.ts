@@ -38,11 +38,11 @@ async function fetchSearchDiagnostics(sd?: string, ed?: string): Promise<Diagnos
       FROM waste
     `;
     const wasteRows = await queryBigQuery<any>(wasteTermsSql);
-    if (wasteRows.length > 0 && wasteRows[0].waste_term_count > 0) {
+    if (wasteRows.length > 0 && Number(wasteRows[0].waste_term_count) > 0) {
       diagnostics.push({
-        title: `${wasteRows[0].waste_term_count} high-waste search terms detected`,
+        title: `${Number(wasteRows[0].waste_term_count)} high-waste search terms detected`,
         severity: 'warning',
-        detail: `Found ${wasteRows[0].waste_term_count} search terms with spend >$50 and zero orders in the selected period, totaling ${formatCurrency(wasteRows[0].waste_spend || 0)} in wasted spend.`,
+        detail: `Found ${Number(wasteRows[0].waste_term_count)} search terms with spend >$50 and zero orders in the selected period, totaling ${formatCurrency(Number(wasteRows[0].waste_spend || 0))} in wasted spend.`,
         actionBias: 'Review search term report and add negative keywords or reduce bids on non-converting high-spend terms.',
         sourceView: 'ops_amazon.amzn_ads_sp_search_terms_v2_view',
       });
@@ -78,7 +78,7 @@ async function fetchSearchDiagnostics(sd?: string, ed?: string): Promise<Diagnos
       FROM rising
     `;
     const risingRows = await queryBigQuery<any>(risingTermsSql);
-    if (risingRows.length > 0 && risingRows[0].rising_count > 0) {
+    if (risingRows.length > 0 && Number(risingRows[0].rising_count) > 0) {
       const risingDetailSql = `
         WITH term_periods AS (
           SELECT
@@ -106,9 +106,9 @@ async function fetchSearchDiagnostics(sd?: string, ed?: string): Promise<Diagnos
       const risingDetailRows = await queryBigQuery<any>(risingDetailSql);
 
       diagnostics.push({
-        title: `${risingRows[0].rising_count} rising search terms showing strong momentum`,
+        title: `${Number(risingRows[0].rising_count)} rising search terms showing strong momentum`,
         severity: 'positive',
-        detail: `Identified ${risingRows[0].rising_count} terms with 50%+ impression growth in the recent half of the selected period.`,
+        detail: `Identified ${Number(risingRows[0].rising_count)} terms with 50%+ impression growth in the recent half of the selected period.`,
         actionBias: 'Consider increasing bids or expanding match types on high-growth terms to capture additional volume.',
         sourceView: 'ops_amazon.amzn_ads_sp_search_terms_v2_view',
         items: risingDetailRows.map((row: any) => ({
@@ -136,14 +136,14 @@ async function fetchSearchDiagnostics(sd?: string, ed?: string): Promise<Diagnos
     if (brandRows.length > 0) {
       const branded = brandRows.find((r: any) => r.is_branded) || { spend: 0, sales: 0 };
       const nonBranded = brandRows.find((r: any) => !r.is_branded) || { spend: 0, sales: 0 };
-      const totalSpend = (branded.spend || 0) + (nonBranded.spend || 0);
-      const brandedPct = totalSpend > 0 ? ((branded.spend / totalSpend) * 100) : 0;
+      const totalSpend = Number(branded.spend || 0) + Number(nonBranded.spend || 0);
+      const brandedPct = totalSpend > 0 ? ((Number(branded.spend || 0) / totalSpend) * 100) : 0;
       const nonBrandedPct = 100 - brandedPct;
 
       diagnostics.push({
         title: `Search spend mix: ${brandedPct.toFixed(0)}% branded, ${nonBrandedPct.toFixed(0)}% non-branded`,
         severity: brandedPct > 70 ? 'warning' : 'neutral',
-        detail: `Branded terms account for ${formatCurrency(branded.spend || 0)} (${brandedPct.toFixed(1)}%) of total search spend, while non-branded terms account for ${formatCurrency(nonBranded.spend || 0)} (${nonBrandedPct.toFixed(1)}%).`,
+        detail: `Branded terms account for ${formatCurrency(Number(branded.spend || 0))} (${brandedPct.toFixed(1)}%) of total search spend, while non-branded terms account for ${formatCurrency(Number(nonBranded.spend || 0))} (${nonBrandedPct.toFixed(1)}%).`,
         actionBias: brandedPct > 70 
           ? 'High branded spend may indicate defensive posture — consider expanding non-branded coverage for growth.'
           : 'Healthy balance between brand defense and category expansion.',
@@ -151,12 +151,12 @@ async function fetchSearchDiagnostics(sd?: string, ed?: string): Promise<Diagnos
         items: [
           {
             label: 'Branded search terms',
-            metric: `${brandedPct.toFixed(1)}% of spend | ${formatCurrency(branded.spend || 0)}`,
+            metric: `${brandedPct.toFixed(1)}% of spend | ${formatCurrency(Number(branded.spend || 0))}`,
             recommendation: brandedPct > 70 ? 'Protect only the highest-value branded terms' : 'Maintain branded defense',
           },
           {
             label: 'Non-branded search terms',
-            metric: `${nonBrandedPct.toFixed(1)}% of spend | ${formatCurrency(nonBranded.spend || 0)}`,
+            metric: `${nonBrandedPct.toFixed(1)}% of spend | ${formatCurrency(Number(nonBranded.spend || 0))}`,
             recommendation: 'Expand the strongest category terms and cut waste',
           },
         ],
@@ -253,9 +253,9 @@ async function fetchPositionTracking(): Promise<PositionTracking[]> {
     }
 
     return rows.map((r: any) => {
-      const impressionShareChange = (r.impression_share || 0) - (r.prior_impression_share || 0);
-      const clickShareChange = (r.click_share || 0) - (r.prior_click_share || 0);
-      const ctr = r.impressions > 0 ? (r.clicks / r.impressions) * 100 : 0;
+      const impressionShareChange = Number(r.impression_share || 0) - Number(r.prior_impression_share || 0);
+      const clickShareChange = Number(r.click_share || 0) - Number(r.prior_click_share || 0);
+      const ctr = Number(r.impressions || 0) > 0 ? (Number(r.clicks || 0) / Number(r.impressions || 0)) * 100 : 0;
       
       let severity: 'positive' | 'neutral' | 'warning' | 'critical' = 'neutral';
       let diagnosis = 'Stable performance';
@@ -276,9 +276,9 @@ async function fetchPositionTracking(): Promise<PositionTracking[]> {
         title: r.asin || '',
         topQuery: r.search_query || '',
         queryVolume: `${Number(r.query_volume || 0).toLocaleString()} searches`,
-        impressionShare: `${((r.impression_share || 0) * 100).toFixed(1)}%`,
-        clickShare: `${((r.click_share || 0) * 100).toFixed(1)}%`,
-        purchaseShare: `${((r.purchase_share || 0) * 100).toFixed(1)}%`,
+        impressionShare: `${(Number(r.impression_share || 0) * 100).toFixed(1)}%`,
+        clickShare: `${(Number(r.click_share || 0) * 100).toFixed(1)}%`,
+        purchaseShare: `${(Number(r.purchase_share || 0) * 100).toFixed(1)}%`,
         clickThroughRate: `${ctr.toFixed(2)}%`,
         diagnosis,
         severity,
@@ -350,10 +350,10 @@ async function fetchCategoryPerformance(): Promise<CategoryRank[]> {
     }
 
     return rows.map((r: any, idx: number) => {
-      const impressionChange = r.prior_impressions > 0 
-        ? ((r.impressions - r.prior_impressions) / r.prior_impressions) * 100
+      const impressionChange = Number(r.prior_impressions || 0) > 0
+        ? ((Number(r.impressions || 0) - Number(r.prior_impressions || 0)) / Number(r.prior_impressions || 0)) * 100
         : 0;
-      const conversionChange = (r.conversion_rate || 0) - (r.prior_conversion_rate || 0);
+      const conversionChange = Number(r.conversion_rate || 0) - Number(r.prior_conversion_rate || 0);
       
       let tone: 'positive' | 'neutral' | 'warning' | 'critical' = 'neutral';
       if (impressionChange > 10 && conversionChange > 0) {
@@ -438,12 +438,12 @@ async function fetchSearchFreshness(): Promise<{ freshness: Freshness[]; freshne
 
     const mapped: any[] = [];
     if (searchRows.length > 0) {
-      const worst = searchRows.reduce((a: any, b: any) => ((a.days_stale || 0) > (b.days_stale || 0) ? a : b));
-      mapped.push({ source_label: 'Search Query Performance', last_date: worst.last_seen_record_date, days_behind: worst.days_stale || 0 });
+      const worst = searchRows.reduce((a: any, b: any) => (Number(a.days_stale || 0) > Number(b.days_stale || 0) ? a : b));
+      mapped.push({ source_label: 'Search Query Performance', last_date: worst.last_seen_record_date, days_behind: Number(worst.days_stale || 0) });
     }
     if (baRows.length > 0) {
-      const worst = baRows.reduce((a: any, b: any) => ((a.days_stale || 0) > (b.days_stale || 0) ? a : b));
-      mapped.push({ source_label: 'Brand Analytics / ASIN visibility', last_date: worst.last_seen_record_date, days_behind: worst.days_stale || 0 });
+      const worst = baRows.reduce((a: any, b: any) => (Number(a.days_stale || 0) > Number(b.days_stale || 0) ? a : b));
+      mapped.push({ source_label: 'Brand Analytics / ASIN visibility', last_date: worst.last_seen_record_date, days_behind: Number(worst.days_stale || 0) });
     }
 
     return buildFreshnessFromRows(mapped);
@@ -586,12 +586,12 @@ export async function fetchSearchSnapshot(startDate?: string, endDate?: string):
 
     const topTerms = termRows.map((r: any) => ({
       term: r.search_query || '',
-      impressions: r.impressions || 0,
-      clicks: r.clicks || 0,
-      orders: r.orders || 0,
-      sales: r.sales || 0,
-      ctr: (r.ctr || 0) * 100,
-      conversionRate: (r.conversion_rate || 0) * 100,
+      impressions: Number(r.impressions || 0),
+      clicks: Number(r.clicks || 0),
+      orders: Number(r.orders || 0),
+      sales: Number(r.sales || 0),
+      ctr: Number(r.ctr || 0) * 100,
+      conversionRate: Number(r.conversion_rate || 0) * 100,
       category: r.is_branded ? 'brand' as const : 'category' as const,
     }));
 
@@ -614,16 +614,16 @@ export async function fetchSearchSnapshot(startDate?: string, endDate?: string):
     const kpiRows = await queryBigQuery<any>(kpiSql);
     const branded = kpiRows.find((r: any) => r.is_branded) || {};
     const nonBranded = kpiRows.find((r: any) => !r.is_branded) || {};
-    const totalSales = (branded.sales || 0) + (nonBranded.sales || 0);
-    const totalClicks = (branded.clicks || 0) + (nonBranded.clicks || 0);
-    const totalImpressions = (branded.impressions || 0) + (nonBranded.impressions || 0);
-    const totalOrders = (branded.orders || 0) + (nonBranded.orders || 0);
+    const totalSales = Number(branded.sales || 0) + Number(nonBranded.sales || 0);
+    const totalClicks = Number(branded.clicks || 0) + Number(nonBranded.clicks || 0);
+    const totalImpressions = Number(branded.impressions || 0) + Number(nonBranded.impressions || 0);
+    const totalOrders = Number(branded.orders || 0) + Number(nonBranded.orders || 0);
 
     const kpis = [
       {
         key: 'non-brand-revenue',
         label: 'Non-brand search revenue',
-        value: formatCurrency(nonBranded.sales || 0, true),
+        value: formatCurrency(Number(nonBranded.sales || 0), true),
         delta: '-',
         trend: 'up' as const,
         interpretation: 'Non-brand search revenue from paid search terms.',
@@ -632,7 +632,7 @@ export async function fetchSearchSnapshot(startDate?: string, endDate?: string):
       {
         key: 'brand-revenue',
         label: 'Brand search revenue',
-        value: formatCurrency(branded.sales || 0, true),
+        value: formatCurrency(Number(branded.sales || 0), true),
         delta: '-',
         trend: 'up' as const,
         interpretation: 'Revenue from branded search queries.',
@@ -661,17 +661,17 @@ export async function fetchSearchSnapshot(startDate?: string, endDate?: string):
     // Top queries with aggregated volume data
     const topQueries = termRows.slice(0, 5).map((r: any) => ({
       query: r.search_query || '',
-      queryVolume: String(r.impressions || 0),
+      queryVolume: String(Number(r.impressions || 0)),
       brandAppearance: r.is_branded ? '100%' : '-',
-      shareOfVoice: totalImpressions > 0 ? `${((r.impressions / totalImpressions) * 100).toFixed(1)}%` : '-',
-      impressions: String(r.impressions || 0),
-      clicks: String(r.clicks || 0),
-      clickShare: totalClicks > 0 ? `${((r.clicks / totalClicks) * 100).toFixed(1)}%` : '-',
-      diagnosis: r.acos && r.acos < 0.35 ? 'Efficient — strong ROAS' :
-                 r.acos && r.acos < 0.55 ? 'Moderate efficiency' :
+      shareOfVoice: totalImpressions > 0 ? `${((Number(r.impressions || 0) / totalImpressions) * 100).toFixed(1)}%` : '-',
+      impressions: String(Number(r.impressions || 0)),
+      clicks: String(Number(r.clicks || 0)),
+      clickShare: totalClicks > 0 ? `${((Number(r.clicks || 0) / totalClicks) * 100).toFixed(1)}%` : '-',
+      diagnosis: Number(r.acos || 0) > 0 && Number(r.acos || 0) < 0.35 ? 'Efficient — strong ROAS' :
+                 Number(r.acos || 0) > 0 && Number(r.acos || 0) < 0.55 ? 'Moderate efficiency' :
                  'High ACoS — review targeting',
-      severity: (r.acos || 1) < 0.35 ? 'positive' as const :
-                (r.acos || 1) < 0.55 ? 'neutral' as const : 'warning' as const,
+      severity: Number(r.acos || 1) < 0.35 ? 'positive' as const :
+                Number(r.acos || 1) < 0.55 ? 'neutral' as const : 'warning' as const,
     }));
 
     return {
@@ -680,10 +680,10 @@ export async function fetchSearchSnapshot(startDate?: string, endDate?: string):
       summary: `Paid search analysis across ${termRows.length} top terms. Total search-attributed revenue: ${formatCurrency(totalSales, true)}.`,
       kpis,
       topTerms,
-      commentary: `Search performance driven by ${topTerms[0]?.term || 'top terms'}. ${nonBranded.sales > branded.sales ? 'Non-brand revenue leads, indicating strong category capture.' : 'Brand terms dominate, indicating healthy brand equity.'}`,
+      commentary: `Search performance driven by ${topTerms[0]?.term || 'top terms'}. ${Number(nonBranded.sales || 0) > Number(branded.sales || 0) ? 'Non-brand revenue leads, indicating strong category capture.' : 'Brand terms dominate, indicating healthy brand equity.'}`,
       implications: [
         `Top search term "${topTerms[0]?.term || '-'}" drives ${topTerms[0] ? ((topTerms[0].sales / totalSales) * 100).toFixed(0) : 0}% of search revenue`,
-        `${nonBranded.sales > branded.sales ? 'Non-brand discovery is strong' : 'Brand queries dominate — consider non-brand expansion'}`,
+        `${Number(nonBranded.sales || 0) > Number(branded.sales || 0) ? 'Non-brand discovery is strong' : 'Brand queries dominate — consider non-brand expansion'}`,
       ],
       nextSteps: [
         'Review high-ACoS terms for bid optimization opportunities',

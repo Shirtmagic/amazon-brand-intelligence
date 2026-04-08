@@ -121,23 +121,23 @@ export async function fetchRetailHealthSnapshot(): Promise<RetailHealthSnapshot>
     };
 
     // Aggregate metrics
-    const totalAvailable = inventoryRows.reduce((s, r) => s + r.available, 0);
-    const totalInbound = inventoryRows.reduce((s, r) => s + r.inbound_quantity, 0);
-    const totalReserved = inventoryRows.reduce((s, r) => s + r.reserved_quantity, 0);
-    const totalUnfulfillable = inventoryRows.reduce((s, r) => s + r.unfulfillable_quantity, 0);
-    const totalStorageCost = inventoryRows.reduce((s, r) => s + r.estimated_storage_cost_next_month, 0);
-    const totalLtsfExposure = inventoryRows.reduce((s, r) => s + r.estimated_ltsf_next_charge, 0);
-    const total30dSales = inventoryRows.reduce((s, r) => s + r.sales_shipped_last_30_days, 0);
-    const total7dSales = inventoryRows.reduce((s, r) => s + r.sales_shipped_last_7_days, 0);
+    const totalAvailable = inventoryRows.reduce((s, r) => s + Number(r.available), 0);
+    const totalInbound = inventoryRows.reduce((s, r) => s + Number(r.inbound_quantity), 0);
+    const totalReserved = inventoryRows.reduce((s, r) => s + Number(r.reserved_quantity), 0);
+    const totalUnfulfillable = inventoryRows.reduce((s, r) => s + Number(r.unfulfillable_quantity), 0);
+    const totalStorageCost = inventoryRows.reduce((s, r) => s + Number(r.estimated_storage_cost_next_month), 0);
+    const totalLtsfExposure = inventoryRows.reduce((s, r) => s + Number(r.estimated_ltsf_next_charge), 0);
+    const total30dSales = inventoryRows.reduce((s, r) => s + Number(r.sales_shipped_last_30_days), 0);
+    const total7dSales = inventoryRows.reduce((s, r) => s + Number(r.sales_shipped_last_7_days), 0);
     const avgDaysOfSupply = inventoryRows.length > 0
-      ? Math.round(inventoryRows.reduce((s, r) => s + r.days_of_supply, 0) / inventoryRows.length)
+      ? Math.round(inventoryRows.reduce((s, r) => s + Number(r.days_of_supply), 0) / inventoryRows.length)
       : 0;
     
-    const criticalSkus = inventoryRows.filter(r => r.days_of_supply <= 7);
-    const warningSkus = inventoryRows.filter(r => r.days_of_supply > 7 && r.days_of_supply <= 21);
-    const healthySkus = inventoryRows.filter(r => r.days_of_supply > 21);
-    const agingSkus = inventoryRows.filter(r => r.inv_age_365_plus_days > 0);
-    const ltsfSkus = inventoryRows.filter(r => r.estimated_ltsf_next_charge > 0);
+    const criticalSkus = inventoryRows.filter(r => Number(r.days_of_supply) <= 7);
+    const warningSkus = inventoryRows.filter(r => Number(r.days_of_supply) > 7 && Number(r.days_of_supply) <= 21);
+    const healthySkus = inventoryRows.filter(r => Number(r.days_of_supply) > 21);
+    const agingSkus = inventoryRows.filter(r => Number(r.inv_age_365_plus_days) > 0);
+    const ltsfSkus = inventoryRows.filter(r => Number(r.estimated_ltsf_next_charge) > 0);
 
     // Inventory health score (0-100)
     const healthScore = Math.round(
@@ -170,7 +170,7 @@ export async function fetchRetailHealthSnapshot(): Promise<RetailHealthSnapshot>
         value: `${avgDaysOfSupply} days`,
         delta: warningSkus.length > 0 ? `${warningSkus.length} SKUs below 21 days` : 'All above 21 days',
         trend: avgDaysOfSupply > 30 ? 'up' : avgDaysOfSupply > 14 ? 'flat' : 'down',
-        interpretation: `Range: ${Math.min(...inventoryRows.map(r => r.days_of_supply))} to ${Math.max(...inventoryRows.map(r => r.days_of_supply))} days across all SKUs`,
+        interpretation: `Range: ${Math.min(...inventoryRows.map(r => Number(r.days_of_supply)))} to ${Math.max(...inventoryRows.map(r => Number(r.days_of_supply)))} days across all SKUs`,
         sourceView: 'reporting_amazon.retail_health_kpi',
       },
       {
@@ -196,7 +196,7 @@ export async function fetchRetailHealthSnapshot(): Promise<RetailHealthSnapshot>
       {
         key: 'sell-through',
         label: 'Avg sell-through rate',
-        value: `${(inventoryRows.reduce((s, r) => s + r.sell_through, 0) / inventoryRows.length).toFixed(1)}%`,
+        value: `${(inventoryRows.reduce((s, r) => s + Number(r.sell_through), 0) / inventoryRows.length).toFixed(1)}%`,
         delta: '',
         trend: 'flat',
         interpretation: 'Units sold and shipped over the past 90 days relative to avg inventory',
@@ -208,10 +208,10 @@ export async function fetchRetailHealthSnapshot(): Promise<RetailHealthSnapshot>
     const inventoryStatus: InventoryStatus[] = inventoryRows.map(r => ({
       sku: r.sku,
       name: r.product_name || r.asin,
-      unitsAvailable: r.available,
-      daysOfSupply: r.days_of_supply,
-      status: skuStatus(r.days_of_supply),
-      inboundQty: r.inbound_quantity,
+      unitsAvailable: Number(r.available),
+      daysOfSupply: Number(r.days_of_supply),
+      status: skuStatus(Number(r.days_of_supply)),
+      inboundQty: Number(r.inbound_quantity),
       inboundEta: null,
     }));
 
@@ -276,14 +276,14 @@ export async function fetchRetailHealthSnapshot(): Promise<RetailHealthSnapshot>
           label: 'Days of supply',
           value: `${avgDaysOfSupply} avg`,
           tone: avgDaysOfSupply > 30 ? 'positive' : avgDaysOfSupply > 14 ? 'warning' : 'critical',
-          detail: `Range: ${Math.min(...inventoryRows.map(r => r.days_of_supply))} to ${Math.max(...inventoryRows.map(r => r.days_of_supply))} days`,
+          detail: `Range: ${Math.min(...inventoryRows.map(r => Number(r.days_of_supply)))} to ${Math.max(...inventoryRows.map(r => Number(r.days_of_supply)))} days`,
         },
         {
           label: 'Aging inventory',
           value: agingSkus.length > 0 ? `${agingSkus.length} SKU(s)` : 'None',
           tone: agingSkus.length > 0 ? 'warning' : 'positive',
           detail: agingSkus.length > 0
-            ? `${agingSkus.reduce((s, r) => s + r.inv_age_365_plus_days, 0)} units over 365 days old`
+            ? `${agingSkus.reduce((s, r) => s + Number(r.inv_age_365_plus_days), 0)} units over 365 days old`
             : 'No inventory over 365 days old',
         },
         {
@@ -298,44 +298,44 @@ export async function fetchRetailHealthSnapshot(): Promise<RetailHealthSnapshot>
 
     // Risk rows
     const risks: RiskRow[] = inventoryRows.map(r => {
-      const isLowStock = r.days_of_supply <= 14;
-      const isAging = r.inv_age_365_plus_days > 0;
-      const hasLtsf = r.estimated_ltsf_next_charge > 0;
-      const needsRestock = r.recommended_order_quantity > 0;
-      const needsRemoval = r.recommended_removal_quantity > 0;
+      const isLowStock = Number(r.days_of_supply) <= 14;
+      const isAging = Number(r.inv_age_365_plus_days) > 0;
+      const hasLtsf = Number(r.estimated_ltsf_next_charge) > 0;
+      const needsRestock = Number(r.recommended_order_quantity) > 0;
+      const needsRemoval = Number(r.recommended_removal_quantity) > 0;
 
       let risk = 'None';
       let severity: RiskRow['severity'] = 'positive';
       let actionBias = 'No action required';
 
       if (isLowStock) {
-        risk = `Low stock — ${r.days_of_supply} days supply`;
-        severity = r.days_of_supply <= 7 ? 'critical' : 'warning';
+        risk = `Low stock — ${Number(r.days_of_supply)} days supply`;
+        severity = Number(r.days_of_supply) <= 7 ? 'critical' : 'warning';
         actionBias = needsRestock
-          ? `Restock ${r.recommended_order_quantity} units`
+          ? `Restock ${Number(r.recommended_order_quantity)} units`
           : 'Expedite inbound shipment or reduce ad spend';
       } else if (isAging && hasLtsf) {
-        risk = `Aging inventory + LTSF exposure (${fmt(r.estimated_ltsf_next_charge)})`;
+        risk = `Aging inventory + LTSF exposure (${fmt(Number(r.estimated_ltsf_next_charge))})`;
         severity = 'warning';
         actionBias = needsRemoval
-          ? `Remove ${r.recommended_removal_quantity} units to avoid fees`
+          ? `Remove ${Number(r.recommended_removal_quantity)} units to avoid fees`
           : 'Consider promotion to accelerate sell-through';
       } else if (isAging) {
-        risk = `${r.inv_age_365_plus_days} units over 365 days old`;
+        risk = `${Number(r.inv_age_365_plus_days)} units over 365 days old`;
         severity = 'warning';
         actionBias = 'Monitor — approaching LTSF threshold';
       }
 
-      const monthlyRev = r.sales_shipped_last_30_days * (r.featuredoffer_price || 0);
+      const monthlyRev = Number(r.sales_shipped_last_30_days) * Number(r.featuredoffer_price || 0);
 
       return {
         asin: r.asin,
         title: r.product_name || r.asin,
         risk,
         severity,
-        stockPosition: `${r.days_of_supply}d / ${r.available} units`,
+        stockPosition: `${Number(r.days_of_supply)}d / ${Number(r.available)} units`,
         suppressionState: 'Active',
-        pricingSignal: r.featuredoffer_price > 0 ? `$${r.featuredoffer_price.toFixed(2)}` : 'N/A',
+        pricingSignal: Number(r.featuredoffer_price) > 0 ? `$${Number(r.featuredoffer_price).toFixed(2)}` : 'N/A',
         buyBoxSignal: 'N/A',
         revenueAtRisk: isLowStock ? `${fmt(monthlyRev)}/mo` : '$0',
         actionBias,
@@ -347,34 +347,34 @@ export async function fetchRetailHealthSnapshot(): Promise<RetailHealthSnapshot>
     const alerts: Alert[] = [];
     for (const r of criticalSkus) {
       alerts.push({
-        headline: `CRITICAL: ${r.sku} at ${r.days_of_supply} days of supply`,
+        headline: `CRITICAL: ${r.sku} at ${Number(r.days_of_supply)} days of supply`,
         entity: `ASIN: ${r.asin}`,
         tone: 'critical',
-        detail: `${r.product_name || r.asin} has only ${r.available} units available with ${fmt(r.sales_shipped_last_7_days)} shipped last 7 days. ${r.inbound_quantity > 0 ? `${r.inbound_quantity} units inbound.` : 'No inbound shipment detected.'}`,
-        actionBias: r.recommended_order_quantity > 0
-          ? `Restock ${r.recommended_order_quantity} units immediately`
+        detail: `${r.product_name || r.asin} has only ${Number(r.available)} units available with ${fmt(Number(r.sales_shipped_last_7_days))} shipped last 7 days. ${Number(r.inbound_quantity) > 0 ? `${Number(r.inbound_quantity)} units inbound.` : 'No inbound shipment detected.'}`,
+        actionBias: Number(r.recommended_order_quantity) > 0
+          ? `Restock ${Number(r.recommended_order_quantity)} units immediately`
           : 'Reduce ad spend and expedite resupply',
         sourceView: 'ops_amazon.sp_fba_manage_inventory_health_v24',
       });
     }
     for (const r of warningSkus) {
       alerts.push({
-        headline: `${r.sku} approaching restock threshold (${r.days_of_supply}d)`,
+        headline: `${r.sku} approaching restock threshold (${Number(r.days_of_supply)}d)`,
         entity: `ASIN: ${r.asin}`,
         tone: 'warning',
-        detail: `${r.product_name || r.asin} has ${r.available} units with ${r.days_of_supply} days of supply. ${r.inbound_quantity > 0 ? `${r.inbound_quantity} units inbound.` : 'No inbound shipment.'}`,
+        detail: `${r.product_name || r.asin} has ${Number(r.available)} units with ${Number(r.days_of_supply)} days of supply. ${Number(r.inbound_quantity) > 0 ? `${Number(r.inbound_quantity)} units inbound.` : 'No inbound shipment.'}`,
         actionBias: 'Monitor daily and prepare restock if velocity increases',
         sourceView: 'ops_amazon.sp_fba_manage_inventory_health_v24',
       });
     }
     for (const r of ltsfSkus) {
       alerts.push({
-        headline: `LTSF exposure on ${r.sku}: ${fmt(r.estimated_ltsf_next_charge)}`,
+        headline: `LTSF exposure on ${r.sku}: ${fmt(Number(r.estimated_ltsf_next_charge))}`,
         entity: `ASIN: ${r.asin}`,
         tone: 'warning',
-        detail: `${r.inv_age_365_plus_days} units over 365 days old. Estimated charge: ${fmt(r.estimated_ltsf_next_charge)}. 6-month projection: ${fmt(r.projected_ltsf_6_mo)}.`,
-        actionBias: r.recommended_removal_quantity > 0
-          ? `Remove ${r.recommended_removal_quantity} units`
+        detail: `${Number(r.inv_age_365_plus_days)} units over 365 days old. Estimated charge: ${fmt(Number(r.estimated_ltsf_next_charge))}. 6-month projection: ${fmt(Number(r.projected_ltsf_6_mo))}.`,
+        actionBias: Number(r.recommended_removal_quantity) > 0
+          ? `Remove ${Number(r.recommended_removal_quantity)} units`
           : 'Run promotion to clear aging stock',
         sourceView: 'ops_amazon.sp_fba_manage_inventory_health_v24',
       });

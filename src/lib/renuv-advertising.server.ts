@@ -87,8 +87,8 @@ export async function fetchAdvertisingSnapshot(startDate?: string, endDate?: str
       ? kpiRows.filter(r => extractDateValue(r.date_day) >= sd)
       : kpiRows.slice(0, 15);
 
-    const currentSpend = currentPeriod.reduce((sum, r) => sum + (r.ad_spend || 0), 0);
-    const currentSales = currentPeriod.reduce((sum, r) => sum + (r.ad_attributed_sales || 0), 0);
+    const currentSpend = currentPeriod.reduce((sum, r) => sum + Number(r.ad_spend || 0), 0);
+    const currentSales = currentPeriod.reduce((sum, r) => sum + Number(r.ad_attributed_sales || 0), 0);
     const currentRoas = currentSpend > 0 ? currentSales / currentSpend : 0;
     const currentAcos = currentSales > 0 ? (currentSpend / currentSales) * 100 : 0;
 
@@ -169,22 +169,22 @@ export async function fetchAdvertisingSnapshot(startDate?: string, endDate?: str
       campaign: r.campaign_name || 'Unknown',
       channel: r.ad_type || 'SP',
       objective: 'Acquisition',
-      spend: formatCurrency(r.spend || 0),
-      attributedSales: formatCurrency(r.sales || 0),
-      roas: (r.roas || 0).toFixed(2),
-      tacosImpact: currentSales > 0 ? formatPercent((r.spend / currentSales) * 100) : '—',
+      spend: formatCurrency(Number(r.spend || 0)),
+      attributedSales: formatCurrency(Number(r.sales || 0)),
+      roas: Number(r.roas || 0).toFixed(2),
+      tacosImpact: currentSales > 0 ? formatPercent((Number(r.spend || 0) / currentSales) * 100) : '—',
       cvr: '—',
-      status: (r.roas || 0) > 5 ? 'positive' : (r.roas || 0) < 3 ? 'warning' : 'neutral',
+      status: Number(r.roas || 0) > 5 ? 'positive' : Number(r.roas || 0) < 3 ? 'warning' : 'neutral',
       sourceView: 'ops_amazon.amzn_ads_sp_campaigns_v3_view'
     }));
 
     const chartData: AdvertisingChartDataPoint[] = [...currentPeriod].reverse().map(r => ({
       date: typeof r.date_day === 'object' ? r.date_day.value : r.date_day,
-      spend: r.ad_spend || 0,
-      sales: r.ad_attributed_sales || 0,
+      spend: Number(r.ad_spend || 0),
+      sales: Number(r.ad_attributed_sales || 0),
       impressions: 0,
       clicks: 0,
-      roas: (r.ad_attributed_sales || 0) / (r.ad_spend || 1)
+      roas: Number(r.ad_attributed_sales || 0) / Number(r.ad_spend || 1)
     }));
 
     const spendMix = campaignRows.length > 0

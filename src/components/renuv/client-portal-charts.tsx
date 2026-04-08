@@ -18,7 +18,7 @@ export function ClientTrendChart({ data }: { data: TrendDataPoint[] }) {
   if (!data || data.length === 0) {
     return (
       <div className="flex h-[240px] items-center justify-center rounded-[24px] border border-[var(--line-soft)] bg-[var(--panel-muted)]">
-        <p className="text-sm text-[var(--ink-600)]">Performance trends shown in detailed reports</p>
+        <p className="text-sm text-[var(--ink-600)]">No trend data available for the selected period</p>
       </div>
     );
   }

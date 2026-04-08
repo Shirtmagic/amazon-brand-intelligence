@@ -77,16 +77,16 @@ export async function fetchOverviewSnapshot(startDate?: string, endDate?: string
 
     const currentPeriod = trafficRows;
 
-    const currentRevenue = currentPeriod.reduce((sum, r) => sum + (r.ordered_revenue || 0), 0);
-    const totalOrders = currentPeriod.reduce((sum, r) => sum + (r.orders || 0), 0);
-    const totalSessions = currentPeriod.reduce((sum, r) => sum + (r.sessions || 0), 0);
-    const currentSpend = adsRows.reduce((sum, r) => sum + (r.ad_spend || 0), 0);
+    const currentRevenue = currentPeriod.reduce((sum, r) => sum + Number(r.ordered_revenue || 0), 0);
+    const totalOrders = currentPeriod.reduce((sum, r) => sum + Number(r.orders || 0), 0);
+    const totalSessions = currentPeriod.reduce((sum, r) => sum + Number(r.sessions || 0), 0);
+    const currentSpend = adsRows.reduce((sum, r) => sum + Number(r.ad_spend || 0), 0);
 
     // Build daily data for chart
     const adsMap = new Map<string, { spend: number; sales: number }>();
     for (const r of adsRows) {
       const d = typeof r.date_day === 'object' ? r.date_day.value : String(r.date_day);
-      adsMap.set(d, { spend: r.ad_spend || 0, sales: r.ad_attributed_sales || 0 });
+      adsMap.set(d, { spend: Number(r.ad_spend || 0), sales: Number(r.ad_attributed_sales || 0) });
     }
     const dailyData: RenuvDailyDataPoint[] = [...currentPeriod]
       .sort((a, b) => {
@@ -99,10 +99,10 @@ export async function fetchOverviewSnapshot(startDate?: string, endDate?: string
         const ads = adsMap.get(d) || { spend: 0, sales: 0 };
         return {
           date: d,
-          revenue: r.ordered_revenue || 0,
+          revenue: Number(r.ordered_revenue || 0),
           adSpend: ads.spend,
-          sessions: r.sessions || 0,
-          orders: r.orders || 0,
+          sessions: Number(r.sessions || 0),
+          orders: Number(r.orders || 0),
         };
       });
     const currentTacos = currentRevenue > 0 ? (currentSpend / currentRevenue) * 100 : 0;
@@ -175,7 +175,7 @@ export async function fetchOverviewSnapshot(startDate?: string, endDate?: string
     const freshnessRows = await queryBigQuery<any>(freshnessSql);
     const freshness: RenuvFreshnessItem[] = freshnessRows.map(r => ({
       source: r.source_table || 'Unknown',
-      status: r.freshness_status === 'fresh' ? 'healthy' : r.days_stale > 2 ? 'stale' : 'watch',
+      status: r.freshness_status === 'fresh' ? 'healthy' : Number(r.days_stale) > 2 ? 'stale' : 'watch',
       updatedAt: r.last_seen_record_date ? new Date(r.last_seen_record_date.value || r.last_seen_record_date).toLocaleDateString() : 'Unknown',
       lag: r.days_stale != null ? `${r.days_stale}d` : '0d',
       coverage: 'Current',
@@ -220,11 +220,11 @@ export async function fetchOverviewSnapshot(startDate?: string, endDate?: string
     const campaigns: RenuvCampaignRow[] = campaignRows.map(r => ({
       campaign: r.campaign_name || 'Unknown',
       channel: r.ad_type || 'SP',
-      revenue: formatCurrency(r.revenue || 0, true),
-      spend: formatCurrency(r.spend || 0, true),
-      roas: `${(r.roas || 0).toFixed(1)}x`,
-      tacosImpact: `${(r.tacos_impact || 0).toFixed(1)} pts`,
-      status: (r.roas || 0) > 5 ? 'positive' : (r.roas || 0) < 3 ? 'warning' : 'neutral',
+      revenue: formatCurrency(Number(r.revenue || 0), true),
+      spend: formatCurrency(Number(r.spend || 0), true),
+      roas: `${Number(r.roas || 0).toFixed(1)}x`,
+      tacosImpact: `${Number(r.tacos_impact || 0).toFixed(1)} pts`,
+      status: Number(r.roas || 0) > 5 ? 'positive' : Number(r.roas || 0) < 3 ? 'warning' : 'neutral',
       sourceView: 'ops_amazon.amzn_ads_sp_campaigns_v3_view'
     }));
 
@@ -311,11 +311,11 @@ export async function fetchOverviewSnapshot(startDate?: string, endDate?: string
 
       const searchRows = await queryBigQuery<any>(searchSql);
       searchOpportunities = searchRows.map(r => {
-        const spend = r.total_spend || 0;
-        const sales = r.total_sales || 0;
-        const clicks = r.total_clicks || 0;
-        const orders = r.total_orders || 0;
-        const acos = r.acos || 0;
+        const spend = Number(r.total_spend || 0);
+        const sales = Number(r.total_sales || 0);
+        const clicks = Number(r.total_clicks || 0);
+        const orders = Number(r.total_orders || 0);
+        const acos = Number(r.acos || 0);
         const cvr = clicks > 0 ? (orders / clicks) * 100 : 0;
 
         return {
@@ -383,8 +383,8 @@ export async function fetchOverviewSnapshot(startDate?: string, endDate?: string
         queryBigQuery<any>(reconTrafficSql),
         queryBigQuery<any>(reconAdsSql),
       ]);
-      const orderRevenue = reconTrafficRows[0]?.order_revenue || 0;
-      const adSales = reconAdsRows[0]?.ad_sales || 0;
+      const orderRevenue = Number(reconTrafficRows[0]?.order_revenue || 0);
+      const adSales = Number(reconAdsRows[0]?.ad_sales || 0);
       const adAttributionRatio = orderRevenue > 0 ? adSales / orderRevenue : 0;
 
       reconciliation = {

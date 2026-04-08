@@ -106,10 +106,10 @@ export async function fetchAsinPerformanceSnapshot(startDate?: string, endDate?:
     }
 
     // Calculate aggregate metrics from sales traffic data
-    const totalRevenue = salesRows.reduce((sum: number, r: any) => sum + (r.revenue || 0), 0);
-    const totalUnits = salesRows.reduce((sum: number, r: any) => sum + (r.units || 0), 0);
-    const totalSessions = salesRows.reduce((sum: number, r: any) => sum + (r.sessions || 0), 0);
-    const totalOrders = salesRows.reduce((sum: number, r: any) => sum + (r.orders || 0), 0);
+    const totalRevenue = salesRows.reduce((sum: number, r: any) => sum + Number(r.revenue || 0), 0);
+    const totalUnits = salesRows.reduce((sum: number, r: any) => sum + Number(r.units || 0), 0);
+    const totalSessions = salesRows.reduce((sum: number, r: any) => sum + Number(r.sessions || 0), 0);
+    const totalOrders = salesRows.reduce((sum: number, r: any) => sum + Number(r.orders || 0), 0);
     const avgCvr = totalSessions > 0 ? (totalOrders / totalSessions) * 100 : 0;
 
     // KPIs
@@ -154,7 +154,7 @@ export async function fetchAsinPerformanceSnapshot(startDate?: string, endDate?:
         key: 'top-asin-share',
         label: 'Top ASIN share',
         value: salesRows.length > 0 && totalRevenue > 0
-          ? formatPercent((salesRows[0].revenue / totalRevenue) * 100)
+          ? formatPercent((Number(salesRows[0].revenue || 0) / totalRevenue) * 100)
           : '0%',
         delta: 'Revenue concentration in #1 ASIN',
         trend: 'flat',
@@ -166,7 +166,8 @@ export async function fetchAsinPerformanceSnapshot(startDate?: string, endDate?:
     // Top ASINs table (by revenue from sales traffic)
     const topAsins: RenuvAsinTableRow[] = salesRows.slice(0, 15).map((r: any) => {
       const inv = invMap.get(r.asin);
-      const revenueShare = totalRevenue > 0 ? (r.revenue / totalRevenue) * 100 : 0;
+      const revenue = Number(r.revenue || 0);
+      const revenueShare = totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0;
       const flags: string[] = [];
       let tone: Tone = 'neutral';
 
@@ -174,14 +175,14 @@ export async function fetchAsinPerformanceSnapshot(startDate?: string, endDate?:
         flags.push('Leader');
         tone = 'positive';
       }
-      if (inv && inv.days_of_supply <= 14) {
+      if (inv && Number(inv.days_of_supply) <= 14) {
         flags.push('Low stock');
         tone = 'warning';
       }
-      if (inv && inv.days_of_supply > 180) {
+      if (inv && Number(inv.days_of_supply) > 180) {
         flags.push('Overstocked');
       }
-      if (r.cvr > 30) {
+      if (Number(r.cvr || 0) > 30) {
         flags.push('High CVR');
         tone = 'positive';
       }
@@ -190,9 +191,9 @@ export async function fetchAsinPerformanceSnapshot(startDate?: string, endDate?:
         asin: r.asin,
         title: r.product_name || inv?.product_name || r.asin,
         category: inv?.product_name ? 'Cleaning' : 'Unknown',
-        orderedRevenue: formatCurrency(r.revenue || 0, true),
-        units: (r.units || 0).toLocaleString(),
-        conversionRate: formatPercent(r.cvr || 0),
+        orderedRevenue: formatCurrency(revenue, true),
+        units: Number(r.units || 0).toLocaleString(),
+        conversionRate: formatPercent(Number(r.cvr || 0)),
         adAttributedShare: inv ? `${inv.days_of_supply}d supply` : '—',
         revenueTrend: `${revenueShare.toFixed(1)}% share`,
         flags: flags.length > 0 ? flags : ['Active'],
@@ -204,12 +205,13 @@ export async function fetchAsinPerformanceSnapshot(startDate?: string, endDate?:
     // Movers — top 5 ASINs by revenue share
     const movers: RenuvAsinMover[] = salesRows.slice(0, 5).map((r: any) => {
       const inv = invMap.get(r.asin);
-      const share = totalRevenue > 0 ? (r.revenue / totalRevenue) * 100 : 0;
+      const revenue = Number(r.revenue || 0);
+      const share = totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0;
       return {
         label: share > 15 ? 'Leader' : 'Core',
         asin: r.asin,
         detail: r.product_name || inv?.product_name || r.asin,
-        metric: formatCurrency(r.revenue || 0, true),
+        metric: formatCurrency(revenue, true),
         change: `${share.toFixed(1)}% of total revenue`,
         trend: 'flat' as const,
         tone: (share > 20 ? 'positive' : 'neutral') as Tone,
@@ -218,10 +220,10 @@ export async function fetchAsinPerformanceSnapshot(startDate?: string, endDate?:
     });
 
     // Concentration panel
-    const top3Revenue = salesRows.slice(0, 3).reduce((sum: number, r: any) => sum + (r.revenue || 0), 0);
+    const top3Revenue = salesRows.slice(0, 3).reduce((sum: number, r: any) => sum + Number(r.revenue || 0), 0);
     const top3Share = totalRevenue > 0 ? (top3Revenue / totalRevenue) * 100 : 0;
     const top1Share = salesRows.length > 0 && totalRevenue > 0
-      ? (salesRows[0].revenue / totalRevenue) * 100 : 0;
+      ? (Number(salesRows[0].revenue || 0) / totalRevenue) * 100 : 0;
 
     const concentration: RenuvAsinConcentrationPanel = {
       headline: top1Share > 30
@@ -256,14 +258,14 @@ export async function fetchAsinPerformanceSnapshot(startDate?: string, endDate?:
     // Flags (ASINs needing attention)
     const flags: RenuvAsinFlag[] = [];
     for (const inv of inventoryRows) {
-      if (inv.days_of_supply <= 14 && inv.days_of_supply > 0) {
+      if (Number(inv.days_of_supply) <= 14 && Number(inv.days_of_supply) > 0) {
         flags.push({
           asin: inv.asin,
           title: inv.product_name || inv.asin,
           issue: 'Low stock',
-          diagnosis: `Only ${inv.days_of_supply} days of supply remaining`,
-          actionBias: `Expedite restock — ${inv.available} units available`,
-          tone: inv.days_of_supply <= 7 ? 'critical' : 'warning',
+          diagnosis: `Only ${Number(inv.days_of_supply)} days of supply remaining`,
+          actionBias: `Expedite restock — ${Number(inv.available)} units available`,
+          tone: Number(inv.days_of_supply) <= 7 ? 'critical' : 'warning',
           sourceView: 'ops_amazon.sp_fba_manage_inventory_health_v24'
         });
       }

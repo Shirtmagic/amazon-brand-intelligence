@@ -135,20 +135,20 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
     }
 
     // Calculate aggregated KPIs from traffic data
-    const currentRevenue = trafficRows.reduce((sum, r) => sum + (r.ordered_revenue || 0), 0);
-    const currentOrders = trafficRows.reduce((sum, r) => sum + (r.orders || 0), 0);
-    const currentSessions = trafficRows.reduce((sum, r) => sum + (r.sessions || 0), 0);
+    const currentRevenue = trafficRows.reduce((sum, r) => sum + Number(r.ordered_revenue || 0), 0);
+    const currentOrders = trafficRows.reduce((sum, r) => sum + Number(r.orders || 0), 0);
+    const currentSessions = trafficRows.reduce((sum, r) => sum + Number(r.sessions || 0), 0);
 
     // Build daily ad spend lookup from the ads query
     const adByDay = new Map<string, { spend: number; sales: number }>();
     for (const r of adSpendRows) {
       const day = typeof r.date_day === 'object' ? r.date_day.value : String(r.date_day);
-      adByDay.set(day, { spend: r.ad_spend || 0, sales: r.ad_sales || 0 });
+      adByDay.set(day, { spend: Number(r.ad_spend || 0), sales: Number(r.ad_sales || 0) });
     }
 
     // Ad spend totals
-    const currentAdSpend = adSpendRows.reduce((sum, r) => sum + (r.ad_spend || 0), 0);
-    const currentAdSales = adSpendRows.reduce((sum, r) => sum + (r.ad_sales || 0), 0);
+    const currentAdSpend = adSpendRows.reduce((sum, r) => sum + Number(r.ad_spend || 0), 0);
+    const currentAdSales = adSpendRows.reduce((sum, r) => sum + Number(r.ad_sales || 0), 0);
 
     // TACOS = Total Ad Cost of Sales = ad_spend / revenue
     const currentTacos = currentRevenue > 0 ? (currentAdSpend / currentRevenue) * 100 : 0;
@@ -240,8 +240,8 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
       const asinRows = await queryBigQuery<any>(asinSql);
       topAsins = asinRows.map((r: any) => ({
         title: `ASIN ${r.asin}`,
-        revenue: r.revenue || 0,
-        cvr: r.cvr || 0,
+        revenue: Number(r.revenue || 0),
+        cvr: Number(r.cvr || 0),
       }));
     } catch (e) {
       console.error('[fetchClientPortalSnapshot] Top ASINs query failed:', e);
@@ -253,10 +253,10 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
       const ad = adByDay.get(day) || { spend: 0, sales: 0 };
       return {
         date: day,
-        revenue: r.ordered_revenue || 0,
-        orders: r.orders || 0,
-        adSpend: ad.spend,
-        sessions: r.sessions || 0,
+        revenue: Number(r.ordered_revenue || 0),
+        orders: Number(r.orders || 0),
+        adSpend: Number(ad.spend),
+        sessions: Number(r.sessions || 0),
       };
     });
 

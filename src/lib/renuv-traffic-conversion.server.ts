@@ -135,21 +135,21 @@ async function fetchAsinRisks(dateFrom: string, dateTo: string): Promise<RenuvTr
         AND date_day >= '${dateFrom}' AND date_day <= '${dateTo}'
     `;
     const totalRows = await queryBigQuery<any>(totalSessionsSql);
-    const totalSessions = totalRows[0]?.total || 1;
+    const totalSessions = Number(totalRows[0]?.total || 1);
 
     return rows.map((r: any) => {
-      const trafficShare = (r.current_sessions / totalSessions) * 100;
+      const trafficShare = (Number(r.current_sessions || 0) / totalSessions) * 100;
 
       return {
         asin: r.asin || 'Unknown',
         title: `ASIN ${r.asin}`,
         trafficShare: `${trafficShare.toFixed(1)}%`,
         sessionsChange: 'N/A',
-        conversionRate: formatPercent(r.cvr || 0),
+        conversionRate: formatPercent(Number(r.cvr || 0)),
         conversionChange: 'N/A',
-        demandQuality: r.cvr < 10 ? 'Weak' : 'Below benchmark',
-        diagnosis: `Conversion rate at ${(r.cvr || 0).toFixed(1)}% — below 15% benchmark`,
-        severity: r.cvr < 10 ? 'critical' as const : 'warning' as const,
+        demandQuality: Number(r.cvr || 0) < 10 ? 'Weak' : 'Below benchmark',
+        diagnosis: `Conversion rate at ${Number(r.cvr || 0).toFixed(1)}% — below 15% benchmark`,
+        severity: Number(r.cvr || 0) < 10 ? 'critical' as const : 'warning' as const,
         sourceView: 'reporting_amazon.asin_traffic_conversion_daily',
       };
     });
@@ -202,12 +202,12 @@ export async function fetchTrafficSnapshot(startDate?: string, endDate?: string)
       };
     }
 
-    const currentSessions = rows.reduce((s, r) => s + (r.sessions || 0), 0);
-    const currentRevenue = rows.reduce((s, r) => s + (r.ordered_revenue || 0), 0);
-    const currentUnits = rows.reduce((s, r) => s + (r.units_ordered || 0), 0);
-    const currentOrders = rows.reduce((s, r) => s + (r.orders || 0), 0);
-    const currentPageViews = rows.reduce((s, r) => s + (r.page_views || 0), 0);
-    const avgBuyBox = rows.reduce((s, r) => s + (r.avg_buy_box || 0), 0) / rows.length;
+    const currentSessions = rows.reduce((s, r) => s + Number(r.sessions || 0), 0);
+    const currentRevenue = rows.reduce((s, r) => s + Number(r.ordered_revenue || 0), 0);
+    const currentUnits = rows.reduce((s, r) => s + Number(r.units_ordered || 0), 0);
+    const currentOrders = rows.reduce((s, r) => s + Number(r.orders || 0), 0);
+    const currentPageViews = rows.reduce((s, r) => s + Number(r.page_views || 0), 0);
+    const avgBuyBox = rows.reduce((s, r) => s + Number(r.avg_buy_box || 0), 0) / rows.length;
 
     const currentCVR = currentSessions > 0 ? (currentOrders / currentSessions) * 100 : 0;
     const currentRPS = currentSessions > 0 ? currentRevenue / currentSessions : 0;
@@ -256,9 +256,9 @@ export async function fetchTrafficSnapshot(startDate?: string, endDate?: string)
     const dailyData: DailyTrafficDataPoint[] = rows
       .map((r: any) => {
         const dayDate = extractDateValue(r.date_day);
-        const daySessions = r.sessions || 0;
-        const dayOrders = r.orders || 0;
-        const dayRevenue = r.ordered_revenue || 0;
+        const daySessions = Number(r.sessions || 0);
+        const dayOrders = Number(r.orders || 0);
+        const dayRevenue = Number(r.ordered_revenue || 0);
         return {
           date: dayDate,
           sessions: daySessions,
