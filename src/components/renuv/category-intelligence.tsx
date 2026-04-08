@@ -475,19 +475,19 @@ export function CategoryIntelligenceSection({ data }: { data: CategoryIntelligen
         )}
       </div>
 
-      {/* Share trends chart + BSR side by side on large screens */}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)]">
-        <div>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-600)]">Share trend — last {data.shareTrends.length} weeks</p>
-          <ShareTrendChart trends={data.shareTrends} />
-          <p className="mt-2 text-[11px] text-[var(--ink-600)]">
-            Shows your average impression, click, and purchase share across all tracked search queries each week.
-            If purchase share is above click share, you convert better than the market average.
-          </p>
-        </div>
-        <div>
-          <BSRTable entries={data.bsrTracking} />
-        </div>
+      {/* Share trends chart — full width */}
+      <div>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-600)]">Share trend — last {data.shareTrends.length} weeks</p>
+        <ShareTrendChart trends={data.shareTrends} />
+        <p className="mt-2 text-[11px] text-[var(--ink-600)]">
+          Shows your average impression, click, and purchase share across all tracked search queries each week.
+          If purchase share is above click share, you convert better than the market average.
+        </p>
+      </div>
+
+      {/* BSR — full width, sorted best sellers first */}
+      <div>
+        <BSRTable entries={[...data.bsrTracking].sort((a, b) => a.salesRank - b.salesRank)} />
       </div>
 
       {/* Per-query competitive table */}

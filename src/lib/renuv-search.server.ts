@@ -588,13 +588,21 @@ async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undef
       bsrTrendMap.get(asin)!.push({ date: dateVal, rank });
     }
 
-    // Process BSR with trend data
-    const bsrTracking: BSREntry[] = bsrRows.map((r: any) => ({
-      asin: r.asin || '',
-      productName: r.product_name || r.asin || '',
-      salesRank: Number(r.sales_rank || 0),
-      trend: bsrTrendMap.get(r.asin || '') || [],
-    }));
+    // Process BSR with trend data — deduplicate by salesRank
+    // ASINs in the same parent listing share the same BSR, so keep only one per rank
+    const seenRanks = new Set<number>();
+    const bsrTracking: BSREntry[] = [];
+    for (const r of bsrRows) {
+      const rank = Number(r.sales_rank || 0);
+      if (seenRanks.has(rank)) continue;
+      seenRanks.add(rank);
+      bsrTracking.push({
+        asin: r.asin || '',
+        productName: r.product_name || r.asin || '',
+        salesRank: rank,
+        trend: bsrTrendMap.get(r.asin || '') || [],
+      });
+    }
 
     // Calculate averages for summary
     const avgImpShare = queryShares.length > 0
