@@ -439,7 +439,7 @@ async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undef
         COALESCE(p.prior_purchase_share, 0) AS prior_purchase_share
       FROM current_agg c
       LEFT JOIN prior_agg p ON c.search_query = p.search_query
-      WHERE c.our_clicks > 0 OR c.our_purchases > 0
+      WHERE c.our_clicks >= 10 OR c.our_purchases >= 10
       ORDER BY c.our_purchases DESC, c.our_clicks DESC, c.our_impression_share DESC
       LIMIT 50
     `;
