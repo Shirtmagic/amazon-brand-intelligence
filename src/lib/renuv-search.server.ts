@@ -439,9 +439,9 @@ async function fetchCategoryIntelligence(): Promise<CategoryIntelligence | undef
         COALESCE(p.prior_purchase_share, 0) AS prior_purchase_share
       FROM current_agg c
       LEFT JOIN prior_agg p ON c.search_query = p.search_query
-      WHERE c.query_volume > 0
-      ORDER BY c.query_volume DESC
-      LIMIT 25
+      WHERE c.our_clicks > 0 OR c.our_purchases > 0
+      ORDER BY c.our_purchases DESC, c.our_clicks DESC, c.our_impression_share DESC
+      LIMIT 50
     `;
 
     // Query 2: Share trends over last 8 weeks
