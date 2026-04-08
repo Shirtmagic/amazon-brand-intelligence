@@ -17,8 +17,8 @@ export function RevenueByAsinChart({ asins }: { asins: Array<{ asin: string; tit
   }
 
   const data = asins.map(a => {
-    const rev = parseFloat(a.orderedRevenue.replace(/[$,k]/g, '')) || 0;
-    const multiplied = a.orderedRevenue.includes('k') ? rev * 1000 : rev;
+    const rev = parseFloat(a.orderedRevenue.replace(/[$,kK]/g, '')) || 0;
+    const multiplied = /k/i.test(a.orderedRevenue) ? rev * 1000 : rev;
     return {
       name: a.title.length > 20 ? a.title.slice(0, 20) + '...' : a.title,
       Revenue: multiplied,
@@ -55,8 +55,8 @@ export function ConcentrationDonut({ asins }: { asins: Array<{ asin: string; tit
   if (!asins || asins.length === 0) return null;
 
   const parsed = asins.map((a, idx) => {
-    const rev = parseFloat(a.orderedRevenue.replace(/[$,k]/g, '')) || 0;
-    const multiplied = a.orderedRevenue.includes('k') ? rev * 1000 : rev;
+    const rev = parseFloat(a.orderedRevenue.replace(/[$,kK]/g, '')) || 0;
+    const multiplied = /k/i.test(a.orderedRevenue) ? rev * 1000 : rev;
     return { name: a.title.length > 18 ? a.title.slice(0, 18) + '...' : a.title, value: multiplied, color: COLORS[idx % COLORS.length] };
   });
 
