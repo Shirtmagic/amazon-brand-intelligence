@@ -6,6 +6,7 @@ import {
   ClientPortalSnapshot,
   ClientKpi,
   TrendDataPoint,
+  ClientTopAsin,
 } from './renuv-client-portal';
 import { sanitizeDateParam, extractDateValue } from './date-utils';
 
@@ -119,6 +120,7 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
         trendData: [],
         organicRevenue: 0,
         ppcRevenue: 0,
+        topAsins: [],
         growthDrivers: [],
         risks: [],
         nextSteps: [],
@@ -218,6 +220,33 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
       }
     ];
 
+    // Fetch top ASINs by revenue
+    let topAsins: ClientTopAsin[] = [];
+    try {
+      const asinSql = `
+        SELECT
+          asin,
+          SUM(ordered_revenue) AS revenue,
+          SAFE_DIVIDE(SUM(orders), NULLIF(SUM(sessions), 0)) * 100 AS cvr
+        FROM \`renuv-amazon-data-warehouse.core_amazon.fact_sales_traffic_daily\`
+        WHERE brand_key = 'renuv' AND marketplace_key = 'US'
+          AND date_day >= '${sd || new Date(Date.now() - 60 * 86400000).toISOString().split('T')[0]}'
+          AND date_day <= '${ed || new Date().toISOString().split('T')[0]}'
+        GROUP BY asin
+        HAVING SUM(ordered_revenue) > 0
+        ORDER BY revenue DESC
+        LIMIT 5
+      `;
+      const asinRows = await queryBigQuery<any>(asinSql);
+      topAsins = asinRows.map((r: any) => ({
+        title: `ASIN ${r.asin}`,
+        revenue: r.revenue || 0,
+        cvr: r.cvr || 0,
+      }));
+    } catch (e) {
+      console.error('[fetchClientPortalSnapshot] Top ASINs query failed:', e);
+    }
+
     // Trend data from traffic rows merged with daily ad data
     const trendData: TrendDataPoint[] = [...trafficRows].reverse().map(r => {
       const day = typeof r.date_day === 'object' ? r.date_day.value : String(r.date_day);
@@ -241,6 +270,7 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
       trendData,
       organicRevenue: Math.max(currentRevenue - currentAdSales, 0),
       ppcRevenue: currentAdSales,
+      topAsins,
       growthDrivers: [],
       risks: [],
       nextSteps: [],
@@ -262,6 +292,7 @@ export async function fetchClientPortalSnapshot(startDate?: string, endDate?: st
       trendData: [],
       organicRevenue: 0,
       ppcRevenue: 0,
+      topAsins: [],
       growthDrivers: [],
       risks: [],
       nextSteps: [],

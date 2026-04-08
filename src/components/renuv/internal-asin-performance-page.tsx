@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { renuvAsinContracts, type RenuvAsinPageSnapshot, type Tone, type TrendDirection } from '@/lib/renuv-asins';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
 import { KpiLabel } from './metric-tooltip';
+import { RevenueByAsinChart, ConcentrationDonut } from './asin-charts';
 
 export function RenuvInternalAsinPerformancePage({ snapshot, brand }: { snapshot: RenuvAsinPageSnapshot; brand?: string }) {
   return (
@@ -85,6 +86,21 @@ export function RenuvInternalAsinPerformancePage({ snapshot, brand }: { snapshot
               <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--blue-700)]">{kpi.sourceView}</p>
             </article>
           ))}
+        </section>
+
+        <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)]">
+          <Panel>
+            <SectionHeading eyebrow="Revenue distribution" title="Revenue by ASIN" />
+            <div className="mt-5">
+              <RevenueByAsinChart asins={snapshot.topAsins} />
+            </div>
+          </Panel>
+          <Panel>
+            <SectionHeading eyebrow="Portfolio mix" title="Revenue concentration" />
+            <div className="mt-5 flex items-center justify-center">
+              <ConcentrationDonut asins={snapshot.topAsins} />
+            </div>
+          </Panel>
         </section>
 
         <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">

@@ -11,6 +11,7 @@ import type { ExportFormat } from '@/lib/renuv-export';
 import { brandRoot, clientRoute, internalRoute } from '@/lib/renuv-routes';
 import { KpiLabel } from './metric-tooltip';
 import { ClientTrendChart, OrganicPpcDonut } from './client-portal-charts';
+import { TopAsinsChart } from './client-portal-extra-charts';
 
 export interface RenuvClientPortalPageProps {
   snapshot: ClientPortalSnapshot;
@@ -117,6 +118,15 @@ export function RenuvClientPortalPage({ snapshot, hideControls = false, brand }:
             </div>
           </div>
         </section>
+
+        {snapshot.topAsins && snapshot.topAsins.length > 0 && (
+          <section className="mb-6 rounded-[28px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] p-4 sm:p-6 lg:p-8 shadow-[0_24px_70px_rgba(19,44,74,0.08)] backdrop-blur">
+            <SectionHeading eyebrow="Product performance" title="Top products by revenue" icon={<BarChart3 size={20} />} />
+            <div className="mt-5">
+              <TopAsinsChart asins={snapshot.topAsins} />
+            </div>
+          </section>
+        )}
 
         <section id="growth-drivers" className="mb-6 rounded-[28px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] p-4 sm:p-6 lg:p-8 shadow-[0_24px_70px_rgba(19,44,74,0.08)] backdrop-blur">
           <SectionHeading eyebrow="Growth analysis" title="What drove performance this period" icon={<Lightbulb size={20} />} />

@@ -8,6 +8,7 @@ import {
   type RetailHealthSnapshot
 } from '@/lib/renuv-retail-health';
 import { KpiLabel } from './metric-tooltip';
+import { InventoryLevelChart, DaysOfSupplyChart } from './retail-health-charts';
 
 type Tone = 'positive' | 'negative' | 'neutral' | 'warning' | 'info' | 'critical' | 'active' | 'paused' | 'stale' | 'healthy' | 'degraded';
 type TrendDirection = 'up' | 'down' | 'flat';
@@ -91,6 +92,21 @@ export function RenuvInternalRetailHealthPage({ snapshot, brand }: { snapshot: R
               <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--blue-700)]">{kpi.sourceView}</p>
             </article>
           ))}
+        </section>
+
+        <section className="mb-6 grid gap-6 xl:grid-cols-2">
+          <Panel>
+            <SectionHeading eyebrow="Inventory overview" title="Units available by SKU" />
+            <div className="mt-5">
+              <InventoryLevelChart inventory={snapshot.inventoryStatus} />
+            </div>
+          </Panel>
+          <Panel>
+            <SectionHeading eyebrow="Supply runway" title="Days of supply by SKU" />
+            <div className="mt-5">
+              <DaysOfSupplyChart inventory={snapshot.inventoryStatus} />
+            </div>
+          </Panel>
         </section>
 
         <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">

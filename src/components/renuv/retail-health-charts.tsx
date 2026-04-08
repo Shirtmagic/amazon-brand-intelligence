@@ -1,0 +1,87 @@
+'use client';
+
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
+import type { InventoryStatus } from '@/lib/renuv-retail-health';
+
+const STATUS_COLORS = { healthy: '#10b981', warning: '#f59e0b', critical: '#ef4444' };
+
+/**
+ * Inventory levels bar chart — units available per SKU, color-coded by health status.
+ */
+export function InventoryLevelChart({ inventory }: { inventory: InventoryStatus[] }) {
+  if (!inventory || inventory.length === 0) {
+    return (
+      <div className="flex h-[240px] items-center justify-center rounded-[24px] border border-[var(--line-soft)] bg-[var(--panel-muted)]">
+        <p className="text-sm text-[var(--ink-600)]">No inventory data available</p>
+      </div>
+    );
+  }
+
+  const data = inventory.map(i => ({
+    sku: i.sku,
+    name: i.name.length > 22 ? i.name.slice(0, 22) + '...' : i.name,
+    Units: i.unitsAvailable,
+    status: i.status,
+  }));
+
+  return (
+    <div className="h-[240px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+          <XAxis dataKey="sku" tick={{ fontSize: 10, fill: '#627587' }} tickLine={false} />
+          <YAxis tick={{ fontSize: 11, fill: '#627587' }} tickLine={false} axisLine={false} />
+          <Tooltip
+            contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', fontSize: '13px', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
+            formatter={(v: number) => [v.toLocaleString(), 'Units available']}
+          />
+          <Bar dataKey="Units" radius={[6, 6, 0, 0]}>
+            {data.map((entry, idx) => (
+              <Cell key={idx} fill={STATUS_COLORS[entry.status] || '#94a3b8'} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+/**
+ * Days of supply horizontal bar — shows runway per SKU with threshold lines.
+ */
+export function DaysOfSupplyChart({ inventory }: { inventory: InventoryStatus[] }) {
+  if (!inventory || inventory.length === 0) {
+    return (
+      <div className="flex h-[240px] items-center justify-center rounded-[24px] border border-[var(--line-soft)] bg-[var(--panel-muted)]">
+        <p className="text-sm text-[var(--ink-600)]">No inventory data available</p>
+      </div>
+    );
+  }
+
+  const data = inventory.map(i => ({
+    sku: i.sku,
+    'Days of Supply': i.daysOfSupply,
+    status: i.status,
+  })).sort((a, b) => a['Days of Supply'] - b['Days of Supply']);
+
+  return (
+    <div className="h-[240px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} layout="vertical" margin={{ left: 80, right: 20, top: 10, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+          <XAxis type="number" tick={{ fontSize: 11, fill: '#627587' }} tickFormatter={(v: number) => `${v}d`} />
+          <YAxis type="category" dataKey="sku" tick={{ fontSize: 10, fill: '#627587' }} width={70} />
+          <Tooltip
+            contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', fontSize: '13px', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
+            formatter={(v: number) => [`${v} days`, 'Supply runway']}
+          />
+          <Bar dataKey="Days of Supply" radius={[0, 6, 6, 0]}>
+            {data.map((entry, idx) => (
+              <Cell key={idx} fill={STATUS_COLORS[entry.status] || '#94a3b8'} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}

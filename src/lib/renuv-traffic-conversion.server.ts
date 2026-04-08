@@ -10,6 +10,7 @@ import {
   RenuvTrafficQualityPanel,
   RenuvTrafficDiagnostic,
   RenuvTrafficConversionRiskRow,
+  DailyTrafficDataPoint,
 } from './renuv-traffic-conversion';
 import { sanitizeDateParam, extractDateValue } from './date-utils';
 
@@ -192,6 +193,7 @@ export async function fetchTrafficSnapshot(startDate?: string, endDate?: string)
         periodLabel: 'No data available',
         environment: 'internal' as const,
         kpis: [],
+        dailyData: [],
         review: [],
         trafficQuality: { headline: 'No data available', summary: '', signals: [], sourceView: 'reporting_amazon.traffic_quality_daily' as const },
         diagnostics: [],
@@ -250,6 +252,23 @@ export async function fetchTrafficSnapshot(startDate?: string, endDate?: string)
       },
     ];
 
+    // Build daily chart data
+    const dailyData: DailyTrafficDataPoint[] = rows
+      .map((r: any) => {
+        const dayDate = extractDateValue(r.date_day);
+        const daySessions = r.sessions || 0;
+        const dayOrders = r.orders || 0;
+        const dayRevenue = r.ordered_revenue || 0;
+        return {
+          date: dayDate,
+          sessions: daySessions,
+          orders: dayOrders,
+          cvr: daySessions > 0 ? +((dayOrders / daySessions) * 100).toFixed(1) : 0,
+          revenuePerSession: daySessions > 0 ? +(dayRevenue / daySessions).toFixed(2) : 0,
+        };
+      })
+      .sort((a: DailyTrafficDataPoint, b: DailyTrafficDataPoint) => a.date.localeCompare(b.date));
+
     // Build review table (current period only)
     const review: RenuvTrafficConversionReviewRow[] = [
       {
@@ -294,6 +313,7 @@ export async function fetchTrafficSnapshot(startDate?: string, endDate?: string)
       periodLabel: sd && ed ? `${sd} – ${ed} · live data` : 'Trailing 14 days · live data',
       environment: 'internal',
       kpis,
+      dailyData,
       review,
       trafficQuality,
       diagnostics,
@@ -307,6 +327,7 @@ export async function fetchTrafficSnapshot(startDate?: string, endDate?: string)
       periodLabel: 'Data unavailable',
       environment: 'internal' as const,
       kpis: [],
+      dailyData: [],
       review: [],
       trafficQuality: { headline: 'Data unavailable', summary: '', signals: [], sourceView: 'reporting_amazon.traffic_quality_daily' as const },
       diagnostics: [],

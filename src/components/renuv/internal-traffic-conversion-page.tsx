@@ -10,6 +10,7 @@ import {
   type TrendDirection
 } from '@/lib/renuv-traffic-conversion';
 import { KpiLabel } from './metric-tooltip';
+import { SessionCvrTrendChart, AsinCvrBarChart } from './traffic-conversion-charts';
 
 export function RenuvInternalTrafficConversionPage({ snapshot, brand }: { snapshot: RenuvTrafficConversionPageSnapshot; brand?: string }) {
   return (
@@ -90,6 +91,21 @@ export function RenuvInternalTrafficConversionPage({ snapshot, brand }: { snapsh
               <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--blue-700)]">{kpi.sourceView}</p>
             </article>
           ))}
+        </section>
+
+        <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)]">
+          <Panel>
+            <SectionHeading eyebrow="Daily trends" title="Sessions &amp; conversion rate" />
+            <div className="mt-5">
+              <SessionCvrTrendChart data={snapshot.dailyData} />
+            </div>
+          </Panel>
+          <Panel>
+            <SectionHeading eyebrow="ASIN health" title="CVR by at-risk ASIN" />
+            <div className="mt-5">
+              <AsinCvrBarChart risks={snapshot.asinRisks} />
+            </div>
+          </Panel>
         </section>
 
         <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">

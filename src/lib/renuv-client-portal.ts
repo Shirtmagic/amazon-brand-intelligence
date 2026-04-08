@@ -48,6 +48,12 @@ export type MarketContext = {
   sourceView: 'reporting_amazon.client_market_context';
 };
 
+export type ClientTopAsin = {
+  title: string;
+  revenue: number;
+  cvr: number;
+};
+
 export type ClientPortalSnapshot = {
   brand: string;
   periodLabel: string;
@@ -56,6 +62,7 @@ export type ClientPortalSnapshot = {
   trendData: TrendDataPoint[];
   organicRevenue: number;
   ppcRevenue: number;
+  topAsins: ClientTopAsin[];
   growthDrivers: GrowthDriver[];
   risks: ClientRisk[];
   nextSteps: NextStep[];
@@ -157,6 +164,13 @@ export const renuvClientPortalMock: ClientPortalSnapshot = {
   ],
   organicRevenue: 336500,
   ppcRevenue: 206300,
+  topAsins: [
+    { title: 'Advanced Silicone Scar Gel · 1.7 oz', revenue: 52300, cvr: 22.8 },
+    { title: 'Silicone Scar Sheets · 8 ct', revenue: 34700, cvr: 16.9 },
+    { title: 'Post-Surgery Scar Care Bundle', revenue: 28900, cvr: 19.6 },
+    { title: 'Travel Scar Gel Twin Pack', revenue: 24100, cvr: 13.4 },
+    { title: 'PM Recovery Scar Serum', revenue: 17800, cvr: 15.8 },
+  ],
   growthDrivers: [
     {
       title: 'Conversion rate improvement',

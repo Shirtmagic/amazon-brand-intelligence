@@ -73,11 +73,20 @@ export type RenuvTrafficFreshness = {
   sourceView: 'reporting_amazon.data_freshness_status';
 };
 
+export type DailyTrafficDataPoint = {
+  date: string;
+  sessions: number;
+  orders: number;
+  cvr: number;
+  revenuePerSession: number;
+};
+
 export type RenuvTrafficConversionPageSnapshot = {
   brand: string;
   periodLabel: string;
   environment: 'internal';
   kpis: RenuvTrafficConversionKpi[];
+  dailyData: DailyTrafficDataPoint[];
   review: RenuvTrafficConversionReviewRow[];
   trafficQuality: RenuvTrafficQualityPanel;
   diagnostics: RenuvTrafficDiagnostic[];
@@ -100,6 +109,18 @@ export const renuvTrafficConversionMock: RenuvTrafficConversionPageSnapshot = {
   brand: 'Renuv',
   periodLabel: 'Trailing 14 days · internal preview',
   environment: 'internal',
+  dailyData: Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(2026, 2, 18 + i);
+    const sessions = 9500 + Math.round(Math.random() * 2000);
+    const orders = Math.round(sessions * (0.17 + Math.random() * 0.03));
+    return {
+      date: d.toISOString().split('T')[0],
+      sessions,
+      orders,
+      cvr: +((orders / sessions) * 100).toFixed(1),
+      revenuePerSession: +(1.2 + Math.random() * 0.2).toFixed(2),
+    };
+  }),
   kpis: [
     {
       key: 'sessions',
