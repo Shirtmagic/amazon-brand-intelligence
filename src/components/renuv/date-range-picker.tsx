@@ -26,7 +26,7 @@ function DateRangePickerInner() {
 
   const navigate = useCallback(
     (params: URLSearchParams) => {
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [router, pathname],
   );
