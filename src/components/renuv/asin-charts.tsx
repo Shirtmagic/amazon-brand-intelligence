@@ -44,6 +44,24 @@ export function RevenueByAsinChart({ asins }: { asins: Array<{ asin: string; tit
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      <div className="mt-3 flex flex-wrap items-center gap-4 px-2">
+        <div className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-[#10b981]" />
+          <span className="text-[11px] text-[var(--ink-600)]">Leader (&gt;15% share or &gt;30% CVR)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-[#2563eb]" />
+          <span className="text-[11px] text-[var(--ink-600)]">Active</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-[#f59e0b]" />
+          <span className="text-[11px] text-[var(--ink-600)]">Low stock warning</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-[#ef4444]" />
+          <span className="text-[11px] text-[var(--ink-600)]">Critical</span>
+        </div>
+      </div>
     </div>
   );
 }
