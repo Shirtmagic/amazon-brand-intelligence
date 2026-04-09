@@ -40,6 +40,10 @@ export type CompetitiveKeyword = {
   pressureLevel: 'low' | 'medium' | 'high' | 'critical';
   // Weekly history for charts
   weeklyHistory: KeywordMarketShare[];
+  // Is this a user-selected focus keyword?
+  isFocusKeyword: boolean;
+  // Top 3 clicked ASINs for this keyword (from BA, may be empty)
+  topPositions: TopCompetitorPosition[];
 };
 
 /** A competitor ASIN seen in Brand Analytics (if available) */
@@ -55,6 +59,16 @@ export type CompetitorAsin = {
   trend: 'growing' | 'declining' | 'stable';
   // Keywords where they appear
   topKeywords: string[];
+};
+
+/** Top competitor position for a specific keyword (from BA top 3 clicked ASINs) */
+export type TopCompetitorPosition = {
+  rank: number;           // 1, 2, or 3
+  asin: string;
+  productName: string;
+  clickShare: number;     // 0-1 decimal
+  purchaseShare: number;  // 0-1 decimal
+  isOurs: boolean;        // true if this ASIN belongs to us
 };
 
 /** Share of Voice aggregate across all tracked keywords */
