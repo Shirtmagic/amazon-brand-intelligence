@@ -109,8 +109,8 @@ export async function fetchKeywordTrackerData(
         SELECT
           LOWER(search_query_data_search_query) AS search_query,
           CAST(end_date AS STRING) AS week_ending,
-          SUM(cart_add_to_cart_data_asin_add_to_cart_count) AS cart_add_brand,
-          SUM(cart_add_to_cart_data_asin_add_to_cart_share) AS cart_add_brand_share
+          SUM(cart_add_data_asin_cart_add_count) AS cart_add_brand,
+          SUM(cart_add_data_asin_cart_add_share) AS cart_add_brand_share
         FROM \`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view\`
         WHERE ob_seller_id = '${SELLER_ID}'
           AND end_date IN (SELECT end_date FROM recent_weeks)
