@@ -298,6 +298,9 @@ export async function fetchCompetitorIntelligence(
           competitorClickShare: Math.max(0, 1 - clkShare),
           competitorPurchaseShare: Math.max(0, 1 - purShare),
           ourConversionEdge: clkShare > 0 ? purShare / clkShare : 0,
+          ourClickCount: toNumber(r.click_count),
+          ourPurchaseCount: toNumber(r.purchase_count),
+          ourImpressionCount: toNumber(r.impression_count),
         };
       });
 
@@ -328,6 +331,13 @@ export async function fetchCompetitorIntelligence(
 
       const conversionEdge = latest.ourClickShare > 0 ? latest.ourPurchaseShare / latest.ourClickShare : 0;
 
+      // Derive estimated total market volumes from our counts + shares
+      const ourClickCount = latest.ourClickCount;
+      const ourPurchaseCount = latest.ourPurchaseCount;
+      const ourImpressionCount = latest.ourImpressionCount;
+      const estimatedTotalClicks = latest.ourClickShare > 0 ? Math.round(ourClickCount / latest.ourClickShare) : 0;
+      const estimatedTotalPurchases = latest.ourPurchaseShare > 0 ? Math.round(ourPurchaseCount / latest.ourPurchaseShare) : 0;
+
       competitiveKeywords.push({
         keyword,
         searchVolume: latest.searchVolume,
@@ -344,6 +354,11 @@ export async function fetchCompetitorIntelligence(
         weeklyHistory,
         isFocusKeyword: focusSet.has(keyword),
         topPositions: topPositionsMap.get(keyword) || [],
+        ourClickCount,
+        ourPurchaseCount,
+        ourImpressionCount,
+        estimatedTotalClicks,
+        estimatedTotalPurchases,
       });
     }
 

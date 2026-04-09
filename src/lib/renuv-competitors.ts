@@ -16,6 +16,10 @@ export type KeywordMarketShare = {
   competitorClickShare: number;
   competitorPurchaseShare: number;
   ourConversionEdge: number; // purchase_share / click_share ratio
+  // Absolute counts (our ASINs only)
+  ourClickCount: number;
+  ourPurchaseCount: number;
+  ourImpressionCount: number;
 };
 
 /** Aggregated competitive position for a keyword (latest + trend) */
@@ -44,6 +48,13 @@ export type CompetitiveKeyword = {
   isFocusKeyword: boolean;
   // Top 3 clicked ASINs for this keyword (from BA, may be empty)
   topPositions: TopCompetitorPosition[];
+  // Absolute volume estimates for the latest week
+  ourClickCount: number;
+  ourPurchaseCount: number;
+  ourImpressionCount: number;
+  // Estimated total market volume (derived: our_count / our_share)
+  estimatedTotalClicks: number;
+  estimatedTotalPurchases: number;
 };
 
 /** A competitor ASIN seen in Brand Analytics (if available) */
