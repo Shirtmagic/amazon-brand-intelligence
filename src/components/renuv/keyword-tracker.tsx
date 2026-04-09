@@ -344,21 +344,31 @@ function KeywordSummaryCard({ kw, onClick, isActive }: { kw: TrackedKeyword; onC
 }
 
 /* ─── Keyword detail panel ─── */
-function KeywordDetailPanel({ kw }: { kw: TrackedKeyword }) {
+function KeywordDetailPanel({ kw, onBack }: { kw: TrackedKeyword; onBack: () => void }) {
   const [showTable, setShowTable] = useState(false);
   const lw = kw.latestWeek;
 
   if (!lw) {
     return (
-      <div className="rounded-[24px] border border-[var(--line-soft)] bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-[var(--ink-950)]">&quot;{kw.keyword}&quot;</h3>
-        <p className="mt-2 text-sm text-[var(--ink-600)]">No Brand Analytics data found for this keyword. It may not have enough search volume to appear in BA, or you may not have any ranked ASINs for this term.</p>
+      <div className="space-y-4">
+        <button onClick={onBack} className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--blue-700)] hover:underline">
+          <ChevronRight size={14} className="rotate-180" /> Back to all keywords
+        </button>
+        <div className="rounded-[24px] border border-[var(--line-soft)] bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-[var(--ink-950)]">&quot;{kw.keyword}&quot;</h3>
+          <p className="mt-2 text-sm text-[var(--ink-600)]">No Brand Analytics data found for this keyword. It may not have enough search volume to appear in BA, or you may not have any ranked ASINs for this term.</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-5">
+      {/* Back button */}
+      <button onClick={onBack} className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--blue-700)] hover:underline">
+        <ChevronRight size={14} className="rotate-180" /> Back to all keywords
+      </button>
+
       {/* Header */}
       <div className="rounded-[24px] border border-[rgba(94,168,255,0.14)] bg-[linear-gradient(135deg,rgba(94,168,255,0.08),rgba(255,255,255,0.96))] p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -751,7 +761,7 @@ export function KeywordTrackerSection({ data, onKeywordsChange }: {
           <ComparisonView keywords={data.keywords} />
         </>
       ) : activeKw ? (
-        <KeywordDetailPanel kw={activeKw} />
+        <KeywordDetailPanel kw={activeKw} onBack={() => { setView('overview'); }} />
       ) : (
         <p className="text-sm text-[var(--ink-600)]">Select a keyword to view details.</p>
       )}
