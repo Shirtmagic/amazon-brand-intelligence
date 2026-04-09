@@ -203,15 +203,23 @@ function TopPositionsTable({ positions, keyword, kw }: {
         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-600)]">
           Top positions for &quot;{keyword}&quot; — by click share
         </p>
-        {hasTotals && (
-          <div className="mt-1.5 flex flex-wrap items-center gap-4 text-[11px] text-[var(--ink-700)]">
-            <span>{kw.searchVolume.toLocaleString()} searches/wk</span>
-            <span className="text-[var(--ink-400)]">|</span>
-            <span>~{totalClicks.toLocaleString()} total clicks</span>
-            <span className="text-[var(--ink-400)]">|</span>
-            <span>~{totalPurchases.toLocaleString()} total purchases</span>
-          </div>
-        )}
+        <div className="mt-1.5 flex flex-wrap items-center gap-4 text-[11px] text-[var(--ink-700)]">
+          {kw.weeklyHistory.length > 0 && (
+            <>
+              <span>Week ending {kw.weeklyHistory[kw.weeklyHistory.length - 1].weekEnding}</span>
+              <span className="text-[var(--ink-400)]">|</span>
+            </>
+          )}
+          <span>{kw.searchVolume.toLocaleString()} searches/wk</span>
+          {hasTotals && (
+            <>
+              <span className="text-[var(--ink-400)]">|</span>
+              <span>~{totalClicks.toLocaleString()} total clicks</span>
+              <span className="text-[var(--ink-400)]">|</span>
+              <span>~{totalPurchases.toLocaleString()} total purchases</span>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Column headers */}
@@ -395,6 +403,9 @@ function KeywordDetailPanel({ kw, onClose }: { kw: CompetitiveKeyword; onClose: 
             <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--ink-950)]">&quot;{kw.keyword}&quot;</h3>
             <p className="mt-1 text-sm text-[var(--ink-700)]">
               {kw.searchVolume.toLocaleString()} searches/week · {kw.weeklyHistory.length} weeks of data
+              {kw.weeklyHistory.length > 0 && (
+                <span> · {kw.weeklyHistory[0].weekEnding} — {kw.weeklyHistory[kw.weeklyHistory.length - 1].weekEnding}</span>
+              )}
               {kw.isFocusKeyword && <span className="ml-2 text-[#1a5490] font-semibold">· Focus keyword</span>}
             </p>
           </div>
@@ -720,7 +731,10 @@ export function CompetitorIntelligenceSection({ data: initialData }: { data: Com
           {loading ? 'Updating...' : data.headline}
         </h3>
         <p className="mt-2 text-sm text-[var(--ink-700)]">
-          Latest data: week ending {data.weekLabel} · {focusCount} focus keywords · {data.totalTrackedKeywords} total tracked · {data.sovTrend.length} weeks of history
+          {data.sovTrend.length > 0
+            ? `${data.sovTrend[0].weekEnding} — ${data.sovTrend[data.sovTrend.length - 1].weekEnding}`
+            : `Week ending ${data.weekLabel}`}
+          {' · '}{focusCount} focus keywords · {data.totalTrackedKeywords} total tracked · {data.sovTrend.length} weeks of history
         </p>
       </div>
 
