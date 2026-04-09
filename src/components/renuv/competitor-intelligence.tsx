@@ -214,6 +214,18 @@ function TopPositionsTable({ positions, keyword, kw }: {
         )}
       </div>
 
+      {/* Column headers */}
+      <div className="flex items-center gap-3 px-4 py-1.5 border-b border-[var(--line-soft)] bg-[var(--panel-muted)]">
+        <div className="w-8 shrink-0" />
+        <div className="min-w-0 flex-1" />
+        <div className="text-right shrink-0 w-[110px]">
+          <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-500)]">Clicks</p>
+        </div>
+        <div className="text-right shrink-0 w-[110px]">
+          <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-500)]">Purchases</p>
+        </div>
+      </div>
+
       {/* Position rows */}
       <div className="divide-y divide-[var(--line-soft)]">
         {positions.map((pos, idx) => {
@@ -246,18 +258,26 @@ function TopPositionsTable({ positions, keyword, kw }: {
                     {pos.asin} <ExternalLink size={10} />
                   </a>
                 </div>
-                {/* Clicks */}
-                <div className="text-right shrink-0 w-[90px]">
-                  <p className="text-lg font-semibold tabular-nums text-[var(--ink-950)]">{pct(pos.clickShare)}</p>
-                  {hasTotals && (
-                    <p className="text-[11px] font-medium tabular-nums text-[var(--ink-600)]">~{estClicks.toLocaleString()} clicks</p>
+                {/* Clicks: count + share */}
+                <div className="text-right shrink-0 w-[110px]">
+                  {hasTotals ? (
+                    <>
+                      <p className="text-lg font-semibold tabular-nums text-[var(--ink-950)]">{estClicks.toLocaleString()}</p>
+                      <p className="text-[11px] tabular-nums text-[var(--ink-500)]">{pct(pos.clickShare)} share</p>
+                    </>
+                  ) : (
+                    <p className="text-lg font-semibold tabular-nums text-[var(--ink-950)]">{pct(pos.clickShare)}</p>
                   )}
                 </div>
-                {/* Purchases */}
-                <div className="text-right shrink-0 w-[100px] ml-2">
-                  <p className="text-lg font-semibold tabular-nums text-[var(--ink-950)]">{pct(pos.purchaseShare)}</p>
-                  {hasTotals && (
-                    <p className="text-[11px] font-medium tabular-nums text-[var(--ink-600)]">~{estPurchases.toLocaleString()} purchases</p>
+                {/* Purchases: count + share */}
+                <div className="text-right shrink-0 w-[110px]">
+                  {hasTotals ? (
+                    <>
+                      <p className="text-lg font-semibold tabular-nums text-[var(--ink-950)]">{estPurchases.toLocaleString()}</p>
+                      <p className="text-[11px] tabular-nums text-[var(--ink-500)]">{pct(pos.purchaseShare)} share</p>
+                    </>
+                  ) : (
+                    <p className="text-lg font-semibold tabular-nums text-[var(--ink-950)]">{pct(pos.purchaseShare)}</p>
                   )}
                 </div>
               </div>
@@ -266,113 +286,88 @@ function TopPositionsTable({ positions, keyword, kw }: {
         })}
       </div>
 
-      {/* Our position comparison row (if we're NOT already in the top 3) */}
-      {!weAreInTop3 && (
-        <div className="border-t-2 border-dashed border-[#93c5fd] bg-[rgba(59,130,246,0.04)] px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1a5490] text-xs font-bold text-white shrink-0">
-              You
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-[#1a5490]">Your combined ASINs</p>
-                <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-[#e8f4ff] px-2 py-0.5 text-[9px] font-bold text-[#1a5490] uppercase">
-                  You
-                </span>
-              </div>
-              <p className="text-[11px] text-[var(--ink-600)]">All your ASINs on this keyword</p>
-            </div>
-            <div className="text-right shrink-0 w-[90px]">
-              <p className="text-lg font-semibold tabular-nums text-[#1a5490]">{pct(kw.ourClickShare)}</p>
-              {kw.ourClickCount > 0 && (
-                <p className="text-[11px] font-medium tabular-nums text-[#1a5490]">{kw.ourClickCount.toLocaleString()} clicks</p>
-              )}
-            </div>
-            <div className="text-right shrink-0 w-[100px] ml-2">
-              <p className="text-lg font-semibold tabular-nums text-[#1a5490]">{pct(kw.ourPurchaseShare)}</p>
-              {kw.ourPurchaseCount > 0 && (
-                <p className="text-[11px] font-medium tabular-nums text-[#1a5490]">{kw.ourPurchaseCount.toLocaleString()} purchases</p>
-              )}
-            </div>
+      {/* Our position row — always shown at bottom for comparison */}
+      <div className={`border-t-2 ${weAreInTop3 ? 'border-[#93c5fd]' : 'border-dashed border-[#93c5fd]'} bg-[rgba(59,130,246,0.05)] px-4 py-3`}>
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1a5490] text-xs font-bold text-white shrink-0">
+            You
           </div>
-
-          {/* Delta comparison to #1 */}
-          {positions.length > 0 && (
-            <div className="mt-2 ml-11 flex flex-wrap gap-4 text-[11px]">
-              {(() => {
-                const leader = positions[0];
-                const clickGap = leader.clickShare - kw.ourClickShare;
-                const purchaseGap = leader.purchaseShare - kw.ourPurchaseShare;
-                const estClickGap = hasTotals ? Math.round(totalClicks * clickGap) : 0;
-                const estPurchaseGap = hasTotals ? Math.round(totalPurchases * purchaseGap) : 0;
-                return (
-                  <>
-                    <span className={clickGap > 0 ? 'text-[#dc2626]' : 'text-[#16a34a]'}>
-                      {clickGap > 0 ? '-' : '+'}{pctPts(Math.abs(clickGap))} click share vs #1
-                      {hasTotals && estClickGap !== 0 && (
-                        <span className="ml-1 text-[var(--ink-500)]">({clickGap > 0 ? '-' : '+'}{Math.abs(estClickGap).toLocaleString()} clicks)</span>
-                      )}
-                    </span>
-                    <span className={purchaseGap > 0 ? 'text-[#dc2626]' : 'text-[#16a34a]'}>
-                      {purchaseGap > 0 ? '-' : '+'}{pctPts(Math.abs(purchaseGap))} purchase share vs #1
-                      {hasTotals && estPurchaseGap !== 0 && (
-                        <span className="ml-1 text-[var(--ink-500)]">({purchaseGap > 0 ? '-' : '+'}{Math.abs(estPurchaseGap).toLocaleString()} purchases)</span>
-                      )}
-                    </span>
-                  </>
-                );
-              })()}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-[#1a5490]">Your combined ASINs</p>
+              <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-[#e8f4ff] px-2 py-0.5 text-[9px] font-bold text-[#1a5490] uppercase">
+                You
+              </span>
             </div>
-          )}
+            <p className="text-[11px] text-[var(--ink-600)]">All your ASINs on this keyword</p>
+          </div>
+          {/* Our clicks */}
+          <div className="text-right shrink-0 w-[110px]">
+            <p className="text-lg font-semibold tabular-nums text-[#1a5490]">{kw.ourClickCount.toLocaleString()}</p>
+            <p className="text-[11px] tabular-nums text-[#1a5490]">{pct(kw.ourClickShare)} share</p>
+          </div>
+          {/* Our purchases */}
+          <div className="text-right shrink-0 w-[110px]">
+            <p className="text-lg font-semibold tabular-nums text-[#1a5490]">{kw.ourPurchaseCount.toLocaleString()}</p>
+            <p className="text-[11px] tabular-nums text-[#1a5490]">{pct(kw.ourPurchaseShare)} share</p>
+          </div>
         </div>
-      )}
 
-      {/* Gap analysis */}
+        {/* Delta to each position */}
+        {hasTotals && positions.length > 0 && (
+          <div className="mt-2 ml-11 space-y-1">
+            {positions.filter(p => !p.isOurs).map((pos, idx) => {
+              const posClicks = Math.round(totalClicks * pos.clickShare);
+              const posPurchases = Math.round(totalPurchases * pos.purchaseShare);
+              const clickDelta = kw.ourClickCount - posClicks;
+              const purchaseDelta = kw.ourPurchaseCount - posPurchases;
+              const posLabel = `#${pos.rank || idx + 1}`;
+              return (
+                <div key={pos.asin} className="flex flex-wrap gap-4 text-[11px]">
+                  <span className="font-semibold text-[var(--ink-600)] w-[32px]">vs {posLabel}</span>
+                  <span className={clickDelta >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}>
+                    {clickDelta >= 0 ? '+' : ''}{clickDelta.toLocaleString()} clicks
+                    <span className="ml-1 text-[var(--ink-400)]">({clickDelta >= 0 ? '+' : ''}{pctPts(kw.ourClickShare - pos.clickShare)})</span>
+                  </span>
+                  <span className={purchaseDelta >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}>
+                    {purchaseDelta >= 0 ? '+' : ''}{purchaseDelta.toLocaleString()} purchases
+                    <span className="ml-1 text-[var(--ink-400)]">({purchaseDelta >= 0 ? '+' : ''}{pctPts(kw.ourPurchaseShare - pos.purchaseShare)})</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Insight footer */}
       {positions.length > 0 && (() => {
-        const ourPos = positions.find(p => p.isOurs);
         const leader = positions[0];
-        if (weAreInTop3 && ourPos && leader && !leader.isOurs) {
-          const gap = leader.clickShare - ourPos.clickShare;
-          const estClickGap = hasTotals ? Math.round(totalClicks * gap) : 0;
-          return (
-            <div className="border-t border-[var(--line-soft)] bg-[var(--panel-muted)] px-4 py-3">
-              <p className="text-[11px] text-[var(--ink-700)]">
-                <span className="font-semibold">Gap to #1:</span> You need {pctPts(gap)} more click share
-                {hasTotals && estClickGap > 0 && <span> (~{estClickGap.toLocaleString()} clicks)</span>}
-                {' '}to overtake the leader.
-                {ourPos.purchaseShare > ourPos.clickShare
-                  ? ' Your conversion advantage means you could close this gap with more visibility (impressions/clicks).'
-                  : ' Focus on listing optimization and competitive pricing to improve conversion.'}
-              </p>
-            </div>
-          );
-        }
-        if (weAreInTop3 && ourPos && positions[0]?.isOurs) {
+        const conversionRate = kw.ourClickShare > 0 ? kw.ourPurchaseShare / kw.ourClickShare : 0;
+        const leaderConvRate = leader.clickShare > 0 ? leader.purchaseShare / leader.clickShare : 0;
+        const weAreLeader = leader.isOurs || (kw.ourClickShare >= leader.clickShare);
+
+        if (weAreLeader) {
           return (
             <div className="border-t border-[var(--line-soft)] bg-[#e7f4ee] px-4 py-3">
               <p className="text-[11px] text-[#2d8a56] font-semibold">
                 <Crown size={12} className="inline mr-1" />
-                You hold the #1 position on this keyword. Defend it by maintaining strong listing quality and competitive pricing.
+                You hold the top position on this keyword. Defend it by maintaining strong listing quality and competitive pricing.
               </p>
             </div>
           );
         }
-        // When we're NOT in the top 3, show insight
-        if (!weAreInTop3) {
-          const conversionRate = kw.ourClickShare > 0 ? kw.ourPurchaseShare / kw.ourClickShare : 0;
-          const leaderConvRate = leader.clickShare > 0 ? leader.purchaseShare / leader.clickShare : 0;
-          return (
-            <div className="border-t border-[var(--line-soft)] bg-[var(--panel-muted)] px-4 py-3">
-              <p className="text-[11px] text-[var(--ink-700)]">
-                {conversionRate > leaderConvRate
-                  ? <><span className="font-semibold text-[#16a34a]">Conversion advantage:</span> Your purchase/click ratio ({(conversionRate * 100).toFixed(0)}%) beats the #1 position ({(leaderConvRate * 100).toFixed(0)}%). Increasing impressions & clicks could move you into the top 3.</>
-                  : <><span className="font-semibold">Outside top 3.</span> Focus on improving listing relevance, reviews, and advertising to increase your click share for this keyword.</>
-                }
-              </p>
-            </div>
-          );
-        }
-        return null;
+
+        return (
+          <div className="border-t border-[var(--line-soft)] bg-[var(--panel-muted)] px-4 py-3">
+            <p className="text-[11px] text-[var(--ink-700)]">
+              {conversionRate > leaderConvRate
+                ? <><span className="font-semibold text-[#16a34a]">Conversion advantage:</span> Your purchase/click ratio ({(conversionRate * 100).toFixed(0)}%) beats #1 ({(leaderConvRate * 100).toFixed(0)}%). More impressions & clicks could close this gap.</>
+                : <><span className="font-semibold">Behind #1.</span> Focus on listing optimization, reviews, and advertising to increase your click share for this keyword.</>
+              }
+            </p>
+          </div>
+        );
       })()}
     </div>
   );
