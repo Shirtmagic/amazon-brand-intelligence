@@ -376,6 +376,12 @@ function KeywordDetailPanel({ kw, onBack }: { kw: TrackedKeyword; onBack: () => 
             <h3 className="text-lg font-semibold tracking-[-0.02em] text-[var(--ink-950)]">&quot;{kw.keyword}&quot;</h3>
             <p className="mt-1 text-sm text-[var(--ink-700)]">
               {num(lw.searchVolume)} weekly searches · {kw.weeks.length} weeks of data
+              {kw.weeks.length > 0 && (
+                <span> · {kw.weeks[0].weekEnding} — {kw.weeks[kw.weeks.length - 1].weekEnding}</span>
+              )}
+            </p>
+            <p className="mt-1 text-[11px] text-[var(--ink-500)]">
+              Source: Brand Analytics — Search Query Performance (weekly)
             </p>
           </div>
           <TrendBadge trend={kw.trend} />
@@ -687,6 +693,9 @@ export function KeywordTrackerSection({ data, onKeywordsChange }: {
         </h3>
         <p className="mt-1 text-sm text-[var(--ink-700)]">
           {data.latestWeekEnding ? `Latest data: week ending ${data.latestWeekEnding}` : 'Loading...'} · {withDataCount} keywords with data · {data.weekCount} weeks of history
+        </p>
+        <p className="mt-1 text-[11px] text-[var(--ink-500)]">
+          Data source: Amazon Brand Analytics — Search Query Performance (weekly) · Per-ASIN impression, click, purchase &amp; cart-add share for your brand
         </p>
       </div>
 

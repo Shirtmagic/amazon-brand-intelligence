@@ -736,6 +736,9 @@ export function CompetitorIntelligenceSection({ data: initialData }: { data: Com
             : `Week ending ${data.weekLabel}`}
           {' · '}{focusCount} focus keywords · {data.totalTrackedKeywords} total tracked · {data.sovTrend.length} weeks of history
         </p>
+        <p className="mt-1 text-[11px] text-[var(--ink-500)]">
+          Data source: Amazon Brand Analytics — Search Query Performance (your share) + Top Search Terms (top 3 positions by click share, all sellers)
+        </p>
       </div>
 
       {/* Focus Keyword Manager */}
