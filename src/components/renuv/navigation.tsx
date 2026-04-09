@@ -40,6 +40,7 @@ function getNavSections(brand?: string): NavSection[] {
         { label: 'Alerts', href: internalRoute(brand, 'alerts') },
         { label: 'Advertising', href: internalRoute(brand, 'advertising') },
         { label: 'Search', href: internalRoute(brand, 'search') },
+        { label: 'Keyword Tracker', href: internalRoute(brand, 'keyword-tracker') },
         { label: 'Traffic & Conversion', href: internalRoute(brand, 'traffic-conversion') },
         { label: 'ASIN Performance', href: internalRoute(brand, 'asins') },
         { label: 'Retail Health', href: internalRoute(brand, 'retail-health') },
