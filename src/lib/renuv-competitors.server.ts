@@ -23,6 +23,7 @@ import type {
 const SELLER_ID = 'A2CWSK2O443P17';
 const BA_TABLE = '`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_query_by_week_v1_view`';
 const INV_TABLE = '`renuv-amazon-data-warehouse.ops_amazon.sp_fba_manage_inventory_health_v24`';
+const TOP_SEARCH_TABLE = '`renuv-amazon-data-warehouse.ops_amazon.sp_ba_search_terms_by_week_v2_view`';
 
 /** Default focus keywords for Renuv — defines what the brand actually sells */
 export const DEFAULT_FOCUS_KEYWORDS: string[] = [
@@ -121,44 +122,39 @@ export async function fetchCompetitorIntelligence(
     `;
 
     // ---------------------------------------------------------------
-    // Query 2: Top 3 ASINs per focus keyword (latest week)
-    // This queries ALL ASINs in the BA table for our focus keywords,
-    // not just our own. BA may contain top clicked ASINs from all sellers.
+    // Query 2: Top 3 clicked ASINs per focus keyword (latest week)
+    // Uses the Brand Analytics "Top Search Terms" report which has
+    // the top 3 clicked ASINs for EVERY search term — including competitors.
+    // Table: sp_ba_search_terms_by_week_v2_view
+    // Columns: search_term, clicked_asin, clicked_item_name,
+    //          click_share_rank, click_share, conversion_share
     // ---------------------------------------------------------------
     const topPositionsQuery = `
       WITH latest_week AS (
-        SELECT MAX(end_date) AS max_week
-        FROM ${BA_TABLE}
+        SELECT MAX(ob_date) AS max_date
+        FROM ${TOP_SEARCH_TABLE}
         WHERE ob_seller_id = '${SELLER_ID}'
       ),
       our_asins AS (
         SELECT DISTINCT asin
         FROM ${BA_TABLE}
         WHERE ob_seller_id = '${SELLER_ID}'
-      ),
-      ranked AS (
-        SELECT
-          LOWER(ba.search_query_data_search_query) AS search_query,
-          ba.asin,
-          SUM(ba.click_data_asin_click_share) AS click_share,
-          SUM(ba.purchase_data_asin_purchase_share) AS purchase_share,
-          CASE WHEN oa.asin IS NOT NULL THEN TRUE ELSE FALSE END AS is_ours,
-          ROW_NUMBER() OVER (
-            PARTITION BY LOWER(ba.search_query_data_search_query)
-            ORDER BY SUM(ba.click_data_asin_click_share) DESC
-          ) AS position_rank
-        FROM ${BA_TABLE} ba
-        CROSS JOIN latest_week lw
-        LEFT JOIN our_asins oa ON ba.asin = oa.asin
-        WHERE ba.ob_seller_id = '${SELLER_ID}'
-          AND ba.end_date = lw.max_week
-          AND LOWER(ba.search_query_data_search_query) IN (${focusList})
-        GROUP BY LOWER(ba.search_query_data_search_query), ba.asin, oa.asin
       )
-      SELECT search_query, asin, click_share, purchase_share, is_ours, position_rank
-      FROM ranked
-      WHERE position_rank <= 5
-      ORDER BY search_query, position_rank ASC
+      SELECT
+        LOWER(st.search_term) AS search_query,
+        st.clicked_asin AS asin,
+        st.clicked_item_name AS product_name,
+        st.click_share_rank AS position_rank,
+        st.click_share,
+        st.conversion_share,
+        CASE WHEN oa.asin IS NOT NULL THEN TRUE ELSE FALSE END AS is_ours
+      FROM ${TOP_SEARCH_TABLE} st
+      CROSS JOIN latest_week lw
+      LEFT JOIN our_asins oa ON st.clicked_asin = oa.asin
+      WHERE st.ob_seller_id = '${SELLER_ID}'
+        AND st.ob_date = lw.max_date
+        AND LOWER(st.search_term) IN (${focusList})
+      ORDER BY LOWER(st.search_term), st.click_share_rank ASC
     `;
 
     // ---------------------------------------------------------------
@@ -250,9 +246,9 @@ export async function fetchCompetitorIntelligence(
       topPositionsMap.get(kw)!.push({
         rank: toNumber(r.position_rank),
         asin: r.asin || '',
-        productName: productNameMap.get(r.asin) || r.asin || '',
+        productName: r.product_name || productNameMap.get(r.asin) || r.asin || '',
         clickShare: toNumber(r.click_share) / 100,
-        purchaseShare: toNumber(r.purchase_share) / 100,
+        purchaseShare: toNumber(r.conversion_share) / 100,
         isOurs: r.is_ours === true || r.is_ours === 'true',
       });
     }
