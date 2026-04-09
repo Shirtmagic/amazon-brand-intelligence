@@ -247,8 +247,11 @@ export async function fetchCompetitorIntelligence(
         rank: toNumber(r.position_rank),
         asin: r.asin || '',
         productName: r.product_name || productNameMap.get(r.asin) || r.asin || '',
-        clickShare: toNumber(r.click_share) / 100,
-        purchaseShare: toNumber(r.conversion_share) / 100,
+        // Top Search Terms table stores shares as decimals (0.40 = 40%),
+        // unlike the Search Query table which stores as percentages (40.0 = 40%).
+        // Do NOT divide by 100 here.
+        clickShare: toNumber(r.click_share),
+        purchaseShare: toNumber(r.conversion_share),
         isOurs: r.is_ours === true || r.is_ours === 'true',
       });
     }
