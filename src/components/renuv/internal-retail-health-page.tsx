@@ -168,7 +168,7 @@ export function RenuvInternalRetailHealthPage({ snapshot, brand }: { snapshot: R
                 <span
                   key={`${row.asin}-asin`}
                   title={row.title}
-                  className="cursor-help font-mono text-[12px] font-semibold tracking-tight text-[var(--ink-900)] underline decoration-dotted decoration-[var(--ink-600)] underline-offset-[3px]"
+                  className="cursor-help underline decoration-dotted decoration-[var(--ink-600)] underline-offset-[3px]"
                 >
                   {row.asin}
                 </span>,
