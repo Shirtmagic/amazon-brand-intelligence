@@ -117,6 +117,17 @@ export type KeywordWasteSummary = {
   sourceView: string;
 };
 
+/** A single search opportunity row — keyword-level efficiency analysis from sponsored search terms */
+export type SearchOpportunityRow = {
+  query: string;
+  theme: string;
+  searchVolume: string;
+  opportunity: string;
+  cvrGap: string;
+  actionBias: string;
+  sourceView: string;
+};
+
 export type AdvertisingSnapshot = {
   brand: string;
   periodLabel: string;
@@ -133,6 +144,7 @@ export type AdvertisingSnapshot = {
   searchTerms: SearchTermRow[];
   diagnostics: DiagnosticItem[];
   keywordWaste?: KeywordWasteSummary;
+  searchOpportunities?: SearchOpportunityRow[];
 };
 
 export const renuvAdvertisingMock: AdvertisingSnapshot = {

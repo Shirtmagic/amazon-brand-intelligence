@@ -10,6 +10,7 @@ import {
   KeywordWasteRow,
   KeywordPlacement,
   KeywordWasteSummary,
+  SearchOpportunityRow,
 } from './renuv-advertising';
 import { sanitizeDateParam, extractDateValue } from './date-utils';
 
@@ -279,6 +280,55 @@ export async function fetchAdvertisingSnapshot(startDate?: string, endDate?: str
       console.error('[fetchAdvertisingSnapshot] keyword waste fetch failed:', kwErr);
     }
 
+    // Fetch search opportunities (moved from Overview)
+    let searchOpportunities: SearchOpportunityRow[] = [];
+    try {
+      const searchSql = `
+        WITH agg AS (SELECT
+          search_term as search_query,
+          SUM(cost) AS total_spend,
+          SUM(clicks) AS total_clicks,
+          SUM(impressions) AS total_impressions,
+          SUM(purchases14d) AS total_orders,
+          SUM(sales14d) AS total_sales,
+          (SUM(cost) / NULLIF(SUM(sales14d), 0)) * 100 AS acos
+        FROM (
+          SELECT *, ROW_NUMBER() OVER (PARTITION BY DATE(date), campaign_id, search_term ORDER BY ob_processed_at DESC) as rn
+          FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sp_search_terms_v2_view\`
+          WHERE DATE(date) >= '${sd || defaultStart}' AND DATE(date) <= '${ed || defaultEnd}'
+        ) WHERE rn = 1
+          AND LOWER(search_term) NOT LIKE '%renuv%'
+          AND LOWER(search_term) NOT LIKE '%renüv%'
+        GROUP BY search_term
+        ) SELECT * FROM agg WHERE total_spend > 0
+        ORDER BY total_spend DESC
+        LIMIT 10
+      `;
+
+      const searchRows = await queryBigQuery<any>(searchSql);
+      searchOpportunities = searchRows.map(r => {
+        const spend = Number(r.total_spend || 0);
+        const sales = Number(r.total_sales || 0);
+        const clicks = Number(r.total_clicks || 0);
+        const orders = Number(r.total_orders || 0);
+        const acos = Number(r.acos || 0);
+        const cvr = clicks > 0 ? (orders / clicks) * 100 : 0;
+
+        return {
+          query: r.search_query || 'Unknown',
+          theme: spend > 1000 ? 'High investment' : spend > 500 ? 'Medium investment' : 'Low investment',
+          searchVolume: clicks > 500 ? 'High' : clicks > 200 ? 'Medium' : 'Low',
+          opportunity: acos > 30 ? 'Efficiency improvement needed' : sales > 2000 ? 'Scale opportunity' : 'Monitor',
+          cvrGap: cvr < 10 ? `${(10 - cvr).toFixed(1)} pts below benchmark` : `${(cvr - 10).toFixed(1)} pts above benchmark`,
+          actionBias: acos > 40 ? 'Review targeting and reduce waste' : cvr < 10 ? 'Improve conversion relevance' : 'Scale with current efficiency',
+          sourceView: 'ops_amazon.amzn_ads_sp_search_terms_v2_view',
+        };
+      });
+    } catch (err) {
+      console.error('[fetchAdvertisingSnapshot] search opportunities query failed:', err);
+      searchOpportunities = [];
+    }
+
     return {
       brand: 'Renuv',
       periodLabel: sd && ed ? `${sd} – ${ed}` : 'Trailing 30 days',
@@ -301,7 +351,8 @@ export async function fetchAdvertisingSnapshot(startDate?: string, endDate?: str
       spendMix,
       searchTerms,
       diagnostics,
-      keywordWaste
+      keywordWaste,
+      searchOpportunities,
     };
   } catch (error) {
     console.error('[fetchAdvertisingSnapshot] Failed:', error);

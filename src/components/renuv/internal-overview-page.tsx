@@ -14,15 +14,6 @@ function findKpi(kpis: RenuvOverviewSnapshot['kpis'], key: string) {
   return kpis.find((k) => k.key === key);
 }
 
-function getActionBiasHelp(actionBias: string) {
-  const normalized = actionBias.toLowerCase();
-  if (normalized.includes('reduce waste')) return 'Use this when spend is landing on lower-quality traffic and efficiency suggests tightening targeting or bids.';
-  if (normalized.includes('review targeting')) return 'Use this when the term is relevant but the current targeting setup likely needs refinement before adding more spend.';
-  if (normalized.includes('scale')) return 'Use this when efficiency and conversion quality suggest the term can likely support more budget or exposure.';
-  if (normalized.includes('defend')) return 'Use this when the term is strategically important and worth protecting with consistent coverage.';
-  return 'This recommendation reflects the best next action based on conversion quality, efficiency, and likely upside.';
-}
-
 function isFeeDataAvailable(feeSummary: RenuvOverviewSnapshot['feeSummary']) {
   const rate = feeSummary.feeRate;
   const fees = feeSummary.estimatedFees;
@@ -220,7 +211,7 @@ export function RenuvInternalOverviewPage({ snapshot, brand }: { snapshot: Renuv
           </Panel>
         </section>
 
-        <section className="mb-6 grid gap-6 xl:grid-cols-2">
+        <section className="mb-6">
           <Panel>
             <SectionHeading eyebrow="Campaign performance" title="Top campaigns" />
             <DataTable
@@ -235,29 +226,6 @@ export function RenuvInternalOverviewPage({ snapshot, brand }: { snapshot: Renuv
                 <ToneBadge key={`${row.campaign}-status`} tone={row.status}>{formatToneLabel(row.status)}</ToneBadge>
               ])}
               footer={snapshot.campaigns[0]?.sourceView}
-            />
-          </Panel>
-
-          <Panel>
-            <SectionHeading eyebrow="Search intelligence" title="Search opportunities" />
-            <DataTable
-              columns={[
-                { label: 'Query' },
-                { label: 'Theme' },
-                { label: 'Volume' },
-                { label: 'Opportunity', help: 'Opportunity summarizes how attractive a search term looks based on demand, conversion quality, and room to win more sales.' },
-                { label: 'CVR gap', help: 'CVR gap compares this term’s conversion rate to the benchmark we expect for similar terms in the selected period.' },
-                { label: 'Action bias', help: 'Action bias is the recommended next move for this term based on efficiency, conversion quality, and likely upside.' }
-              ]}
-              rows={snapshot.searchOpportunities.map((row) => [
-                row.query,
-                row.theme,
-                row.searchVolume,
-                row.opportunity,
-                row.cvrGap,
-                <span title={getActionBiasHelp(row.actionBias)}>{row.actionBias}</span>
-              ])}
-              footer={snapshot.searchOpportunities[0]?.sourceView}
             />
           </Panel>
         </section>

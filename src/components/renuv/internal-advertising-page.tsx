@@ -257,6 +257,29 @@ export function RenuvInternalAdvertisingPage({ snapshot, brand }: { snapshot: Ad
           </section>
         )}
 
+        {snapshot.searchOpportunities && snapshot.searchOpportunities.length > 0 && (
+          <section className="mb-6">
+            <Panel>
+              <SectionHeading eyebrow="Search intelligence" title="Search opportunities" />
+              <p className="mt-3 mb-5 max-w-3xl text-sm leading-6 text-[var(--ink-700)]">
+                Top sponsored search terms ranked by spend. Each row flags whether to scale, tighten, or review targeting based on efficiency and conversion quality.
+              </p>
+              <DataTable
+                columns={['Query', 'Theme', 'Volume', 'Opportunity', 'CVR gap', 'Action bias']}
+                rows={snapshot.searchOpportunities.map((row) => [
+                  row.query,
+                  row.theme,
+                  row.searchVolume,
+                  row.opportunity,
+                  row.cvrGap,
+                  row.actionBias,
+                ])}
+                footer={snapshot.searchOpportunities[0]?.sourceView}
+              />
+            </Panel>
+          </section>
+        )}
+
         <section className="rounded-[28px] border border-[var(--line-soft)] bg-[rgba(255,255,255,0.78)] p-5 shadow-[0_24px_70px_rgba(19,44,74,0.08)] backdrop-blur md:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
