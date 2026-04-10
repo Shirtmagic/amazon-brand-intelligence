@@ -11,6 +11,7 @@ import { KpiLabel } from './metric-tooltip';
 import { AdvertisingChart } from './advertising-chart';
 import { RoasByCampaignChart, SpendMixDonut } from './campaign-charts';
 import { KeywordWasteTable } from './keyword-waste-table';
+import { SearchOpportunitiesTable } from './search-opportunities-table';
 
 type Tone = 'positive' | 'negative' | 'neutral' | 'warning' | 'info' | 'critical' | 'active' | 'paused' | 'stale' | 'healthy' | 'degraded';
 type TrendDirection = 'up' | 'down' | 'flat';
@@ -262,20 +263,11 @@ export function RenuvInternalAdvertisingPage({ snapshot, brand }: { snapshot: Ad
             <Panel>
               <SectionHeading eyebrow="Search intelligence" title="Search opportunities" />
               <p className="mt-3 mb-5 max-w-3xl text-sm leading-6 text-[var(--ink-700)]">
-                Top sponsored search terms ranked by spend. Each row flags whether to scale, tighten, or review targeting based on efficiency and conversion quality.
+                Top sponsored search terms ranked by spend. Click any keyword to see every campaign and match
+                type it runs in, along with a per-placement recommendation (scale, hold, tighten, or pause) driven
+                by ACOS, ROAS, and CVR thresholds.
               </p>
-              <DataTable
-                columns={['Query', 'Theme', 'Volume', 'Opportunity', 'CVR gap', 'Action bias']}
-                rows={snapshot.searchOpportunities.map((row) => [
-                  row.query,
-                  row.theme,
-                  row.searchVolume,
-                  row.opportunity,
-                  row.cvrGap,
-                  row.actionBias,
-                ])}
-                footer={snapshot.searchOpportunities[0]?.sourceView}
-              />
+              <SearchOpportunitiesTable rows={snapshot.searchOpportunities} />
             </Panel>
           </section>
         )}

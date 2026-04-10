@@ -117,6 +117,21 @@ export type KeywordWasteSummary = {
   sourceView: string;
 };
 
+/** A single campaign placement for a search opportunity, with per-campaign recommendation */
+export type SearchOpportunityPlacement = {
+  campaignName: string;
+  matchType: string;
+  spend: number;
+  sales: number;
+  clicks: number;
+  impressions: number;
+  orders: number;
+  roas: number;
+  acos: number;
+  cvr: number;
+  recommendation: string;
+};
+
 /** A single search opportunity row — keyword-level efficiency analysis from sponsored search terms */
 export type SearchOpportunityRow = {
   query: string;
@@ -126,6 +141,17 @@ export type SearchOpportunityRow = {
   cvrGap: string;
   actionBias: string;
   sourceView: string;
+  // Aggregate metrics
+  totalSpend: number;
+  totalSales: number;
+  totalClicks: number;
+  totalImpressions: number;
+  totalOrders: number;
+  acos: number;
+  roas: number;
+  cvr: number;
+  // Per-campaign breakdown
+  placements: SearchOpportunityPlacement[];
 };
 
 export type AdvertisingSnapshot = {

@@ -11,6 +11,7 @@ import {
   KeywordPlacement,
   KeywordWasteSummary,
   SearchOpportunityRow,
+  SearchOpportunityPlacement,
 } from './renuv-advertising';
 import { sanitizeDateParam, extractDateValue } from './date-utils';
 
@@ -281,37 +282,132 @@ export async function fetchAdvertisingSnapshot(startDate?: string, endDate?: str
     }
 
     // Fetch search opportunities (moved from Overview)
+    //
+    // Logic:
+    //   1. Source: ops_amazon.amzn_ads_sp_search_terms_v2_view (Sponsored Products search terms report)
+    //   2. Filter: date range + exclude brand terms (renuv / renüv) + spend > 0
+    //   3. Deduplicate on (date, campaign_id, search_term) via ROW_NUMBER to avoid inflated metrics
+    //      when multiple rows exist for the same day/campaign/term.
+    //   4. Aggregate by search_term → spend, clicks, impressions, orders (purchases14d), sales (sales14d)
+    //   5. Sort by total_spend DESC, take top 10 (these are the highest-investment non-brand search terms
+    //      where we most need to know whether to scale, cut, or optimize).
+    //   6. For those top 10 terms, fetch a per-campaign/match-type breakdown so the UI can expand each row.
+    //
+    // Labels:
+    //   - theme          = spend bucket (>$1000 = High investment, >$500 = Medium, else Low)
+    //   - searchVolume   = click bucket (>500 = High, >200 = Medium, else Low)
+    //   - opportunity    = ACOS > 30% → efficiency improvement; sales > $2000 → scale; else monitor
+    //   - cvrGap         = CVR vs 10% benchmark (positive above, negative below)
+    //   - actionBias     = ACOS > 40% → review & reduce; CVR < 10% → improve conversion; else scale
     let searchOpportunities: SearchOpportunityRow[] = [];
     try {
+      const startBound = sd || defaultStart;
+      const endBound = ed || defaultEnd;
+
+      // Step 1: aggregate top 10 by spend
       const searchSql = `
-        WITH agg AS (SELECT
-          search_term as search_query,
-          SUM(cost) AS total_spend,
-          SUM(clicks) AS total_clicks,
-          SUM(impressions) AS total_impressions,
-          SUM(purchases14d) AS total_orders,
-          SUM(sales14d) AS total_sales,
-          (SUM(cost) / NULLIF(SUM(sales14d), 0)) * 100 AS acos
-        FROM (
+        WITH dedup AS (
           SELECT *, ROW_NUMBER() OVER (PARTITION BY DATE(date), campaign_id, search_term ORDER BY ob_processed_at DESC) as rn
           FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sp_search_terms_v2_view\`
-          WHERE DATE(date) >= '${sd || defaultStart}' AND DATE(date) <= '${ed || defaultEnd}'
-        ) WHERE rn = 1
+          WHERE DATE(date) >= '${startBound}' AND DATE(date) <= '${endBound}'
+        )
+        SELECT
+          search_term AS search_query,
+          SUM(CAST(cost AS FLOAT64)) AS total_spend,
+          SUM(CAST(clicks AS INT64)) AS total_clicks,
+          SUM(CAST(impressions AS INT64)) AS total_impressions,
+          SUM(CAST(purchases14d AS INT64)) AS total_orders,
+          SUM(CAST(sales14d AS FLOAT64)) AS total_sales
+        FROM dedup
+        WHERE rn = 1
           AND LOWER(search_term) NOT LIKE '%renuv%'
           AND LOWER(search_term) NOT LIKE '%renüv%'
         GROUP BY search_term
-        ) SELECT * FROM agg WHERE total_spend > 0
+        HAVING SUM(CAST(cost AS FLOAT64)) > 0
         ORDER BY total_spend DESC
         LIMIT 10
       `;
 
       const searchRows = await queryBigQuery<any>(searchSql);
+      const topTerms = searchRows.map(r => r.search_query).filter(Boolean) as string[];
+
+      // Step 2: placements for those top 10 (per campaign + match type)
+      let placementRows: any[] = [];
+      if (topTerms.length > 0) {
+        const termList = topTerms.map(t => `'${t.replace(/'/g, "''")}'`).join(',');
+        const placementSql = `
+          SELECT
+            search_term,
+            campaign_name,
+            match_type,
+            SUM(CAST(cost AS FLOAT64)) AS spend,
+            SUM(CAST(sales14d AS FLOAT64)) AS sales,
+            SUM(CAST(clicks AS INT64)) AS clicks,
+            SUM(CAST(impressions AS INT64)) AS impressions,
+            SUM(CAST(purchases14d AS INT64)) AS orders
+          FROM \`renuv-amazon-data-warehouse.ops_amazon.amzn_ads_sp_search_terms_v2_view\`
+          WHERE DATE(date) >= '${startBound}' AND DATE(date) <= '${endBound}'
+            AND search_term IN (${termList})
+          GROUP BY search_term, campaign_name, match_type
+          ORDER BY spend DESC
+        `;
+        placementRows = await queryBigQuery<any>(placementSql);
+      }
+
+      const placementsByTerm = new Map<string, SearchOpportunityPlacement[]>();
+      for (const p of placementRows) {
+        const term = p.search_term;
+        const spend = Number(p.spend || 0);
+        const sales = Number(p.sales || 0);
+        const clicks = Number(p.clicks || 0);
+        const orders = Number(p.orders || 0);
+        const acos = sales > 0 ? (spend / sales) * 100 : spend > 0 ? 999 : 0;
+        const roas = spend > 0 ? sales / spend : 0;
+        const cvr = clicks > 0 ? (orders / clicks) * 100 : 0;
+
+        // Per-campaign recommendation logic
+        let recommendation: string;
+        if (spend > 0 && sales === 0) {
+          recommendation = `Pause or add as negative — ${clicks} clicks, $${spend.toFixed(0)} spent, 0 sales.`;
+        } else if (acos > 60) {
+          recommendation = `Cut bids aggressively — ACOS ${acos.toFixed(0)}% is well above target. Consider negative match.`;
+        } else if (acos > 40) {
+          recommendation = `Reduce bids and tighten match type — ACOS ${acos.toFixed(0)}% above target.`;
+        } else if (cvr < 5 && clicks > 20) {
+          recommendation = `Low CVR (${cvr.toFixed(1)}%) — review listing relevance or adjust targeting.`;
+        } else if (roas >= 4 && orders >= 2) {
+          recommendation = `Scale — ROAS ${roas.toFixed(1)}x is strong. Increase bids/budget on this placement.`;
+        } else if (roas >= 2) {
+          recommendation = `Hold and monitor — ROAS ${roas.toFixed(1)}x is acceptable.`;
+        } else {
+          recommendation = `Monitor — insufficient signal or borderline efficiency.`;
+        }
+
+        const placement: SearchOpportunityPlacement = {
+          campaignName: p.campaign_name || 'Unknown',
+          matchType: p.match_type || 'Unknown',
+          spend,
+          sales,
+          clicks,
+          impressions: Number(p.impressions || 0),
+          orders,
+          roas,
+          acos,
+          cvr,
+          recommendation,
+        };
+        if (!placementsByTerm.has(term)) placementsByTerm.set(term, []);
+        placementsByTerm.get(term)!.push(placement);
+      }
+
       searchOpportunities = searchRows.map(r => {
         const spend = Number(r.total_spend || 0);
         const sales = Number(r.total_sales || 0);
         const clicks = Number(r.total_clicks || 0);
+        const impressions = Number(r.total_impressions || 0);
         const orders = Number(r.total_orders || 0);
-        const acos = Number(r.acos || 0);
+        const acos = sales > 0 ? (spend / sales) * 100 : 0;
+        const roas = spend > 0 ? sales / spend : 0;
         const cvr = clicks > 0 ? (orders / clicks) * 100 : 0;
 
         return {
@@ -322,6 +418,15 @@ export async function fetchAdvertisingSnapshot(startDate?: string, endDate?: str
           cvrGap: cvr < 10 ? `${(10 - cvr).toFixed(1)} pts below benchmark` : `${(cvr - 10).toFixed(1)} pts above benchmark`,
           actionBias: acos > 40 ? 'Review targeting and reduce waste' : cvr < 10 ? 'Improve conversion relevance' : 'Scale with current efficiency',
           sourceView: 'ops_amazon.amzn_ads_sp_search_terms_v2_view',
+          totalSpend: spend,
+          totalSales: sales,
+          totalClicks: clicks,
+          totalImpressions: impressions,
+          totalOrders: orders,
+          acos,
+          roas,
+          cvr,
+          placements: placementsByTerm.get(r.search_query || '') || [],
         };
       });
     } catch (err) {
