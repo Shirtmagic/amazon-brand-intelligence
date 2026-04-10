@@ -112,21 +112,76 @@ export async function GET() {
   }
   results.allInventoryTables = reportNameHits;
 
-  // --- 5. Last check: the FBA Manage Inventory Health table might expose
-  //        an inbound-from-AWD column we've been ignoring ------------------
+  // --- 5. Inventory Ledger often carries AWD location movements even
+  //        when there's no explicitly-named AWD table. Pull the schema
+  //        of both ledger tables and sample distinct location/disposition
+  //        values to see whether AWD shows up as a fulfillment center. ---
   try {
     const sql = `
       SELECT column_name, data_type
       FROM \`${project}.ops_amazon.INFORMATION_SCHEMA.COLUMNS\`
-      WHERE table_name = 'sp_fba_manage_inventory_health_v24'
+      WHERE table_name IN ('sp_inventory_ledger_detailed_v5', 'sp_inventory_ledger_summary_v4', 'sp_inventory_v8')
+      ORDER BY table_name, ordinal_position
+    `;
+    results.ledgerColumns = await queryBigQuery<{ column_name: string; data_type: string }>(sql);
+  } catch (e) {
+    results.ledgerColumns = { error: String(e) };
+  }
+
+  // Probe distinct location values from the detailed ledger — AWD locations
+  // typically include codes like "AWD1", "UWD*", or names containing "AWD".
+  try {
+    const sql = `
+      SELECT DISTINCT location
+      FROM \`${project}.ops_amazon.sp_inventory_ledger_detailed_v5\`
+      WHERE location IS NOT NULL
+      LIMIT 100
+    `;
+    results.ledgerDistinctLocations = await queryBigQuery<{ location: string }>(sql);
+  } catch (e) {
+    results.ledgerDistinctLocations = { error: String(e) };
+  }
+
+  // Same probe for fulfillment_center / fc_id / fc_name if those columns exist.
+  try {
+    const sql = `
+      SELECT DISTINCT disposition
+      FROM \`${project}.ops_amazon.sp_inventory_ledger_detailed_v5\`
+      WHERE disposition IS NOT NULL
+      LIMIT 50
+    `;
+    results.ledgerDistinctDispositions = await queryBigQuery<{ disposition: string }>(sql);
+  } catch (e) {
+    results.ledgerDistinctDispositions = { error: String(e) };
+  }
+
+  // --- 6. sp_inventory_v8 may be the unified "summary" inventory that
+  //        combines AWD + FBA. Check its columns for anything AWD-shaped ---
+  try {
+    const sql = `
+      SELECT column_name, data_type
+      FROM \`${project}.ops_amazon.INFORMATION_SCHEMA.COLUMNS\`
+      WHERE table_name = 'sp_inventory_v8'
       ORDER BY ordinal_position
     `;
-    results.fbaInventoryHealthColumns = await queryBigQuery<{
-      column_name: string;
-      data_type: string;
-    }>(sql);
+    results.spInventoryV8Columns = await queryBigQuery<{ column_name: string; data_type: string }>(sql);
   } catch (e) {
-    results.fbaInventoryHealthColumns = { error: String(e) };
+    results.spInventoryV8Columns = { error: String(e) };
+  }
+
+  // Sample a single row of sp_inventory_v8 for a Renuv SKU so we can
+  // see what fields it actually populates.
+  try {
+    const sql = `
+      SELECT *
+      FROM \`${project}.ops_amazon.sp_inventory_v8\`
+      WHERE ob_seller_id = 'A2CWSK2O443P17'
+      ORDER BY ob_processed_at DESC
+      LIMIT 1
+    `;
+    results.spInventoryV8Sample = await queryBigQuery<Record<string, unknown>>(sql);
+  } catch (e) {
+    results.spInventoryV8Sample = { error: String(e) };
   }
 
   return NextResponse.json(results, { status: 200 });
