@@ -103,10 +103,9 @@ export function RenuvInternalRetailHealthPage({ snapshot, brand }: { snapshot: R
             </div>
           </Panel>
           <Panel>
-            <SectionHeading eyebrow="Supply runway" title="Days of supply by SKU" />
-            <div className="mt-5">
-              <DaysOfSupplyChart inventory={snapshot.inventoryStatus} />
-            </div>
+            {/* DaysOfSupplyChart owns its own heading row so the 7/30/60/90 toggle
+                can sit inline to the right of the title without adding page height. */}
+            <DaysOfSupplyChart inventory={snapshot.inventoryStatus} />
           </Panel>
         </section>
 
