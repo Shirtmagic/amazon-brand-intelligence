@@ -128,18 +128,44 @@ export async function GET() {
     results.ledgerColumns = { error: String(e) };
   }
 
-  // Probe distinct location values from the detailed ledger — AWD locations
-  // typically include codes like "AWD1", "UWD*", or names containing "AWD".
+  // Probe distinct fulfillment_center values from the detailed ledger.
+  // AWD stock typically shows up here under codes like "AWD1", "USWD1",
+  // "USPH1", etc. If any code contains "AWD" we know AWD inventory is
+  // already landing in the warehouse through the ledger.
   try {
     const sql = `
-      SELECT DISTINCT location
+      SELECT fulfillment_center, COUNT(*) AS row_count
       FROM \`${project}.ops_amazon.sp_inventory_ledger_detailed_v5\`
-      WHERE location IS NOT NULL
-      LIMIT 100
+      WHERE fulfillment_center IS NOT NULL
+      GROUP BY fulfillment_center
+      ORDER BY row_count DESC
+      LIMIT 200
     `;
-    results.ledgerDistinctLocations = await queryBigQuery<{ location: string }>(sql);
+    results.ledgerDistinctFulfillmentCenters = await queryBigQuery<{
+      fulfillment_center: string;
+      row_count: number;
+    }>(sql);
   } catch (e) {
-    results.ledgerDistinctLocations = { error: String(e) };
+    results.ledgerDistinctFulfillmentCenters = { error: String(e) };
+  }
+
+  // Also pull distinct event_type values — AWD replenishment shows up as
+  // a specific event_type such as "WarehouseTransfer" or "AWD_Transfer".
+  try {
+    const sql = `
+      SELECT event_type, COUNT(*) AS row_count
+      FROM \`${project}.ops_amazon.sp_inventory_ledger_detailed_v5\`
+      WHERE event_type IS NOT NULL
+      GROUP BY event_type
+      ORDER BY row_count DESC
+      LIMIT 50
+    `;
+    results.ledgerDistinctEventTypes = await queryBigQuery<{
+      event_type: string;
+      row_count: number;
+    }>(sql);
+  } catch (e) {
+    results.ledgerDistinctEventTypes = { error: String(e) };
   }
 
   // Same probe for fulfillment_center / fc_id / fc_name if those columns exist.
