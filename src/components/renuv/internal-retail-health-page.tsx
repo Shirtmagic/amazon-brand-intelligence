@@ -161,10 +161,17 @@ export function RenuvInternalRetailHealthPage({ snapshot, brand }: { snapshot: R
               </Link>
             </div>
             <DataTable
-              columns={['ASIN', 'Product', 'Risk', 'Stock', 'Suppression', 'Pricing', 'Buy box', 'Revenue at risk', 'Action bias']}
+              columns={['ASIN', 'Risk', 'Stock', 'Suppression', 'Pricing', 'Buy box', 'Revenue at risk', 'Action bias']}
               rows={snapshot.risks.map((row) => [
-                row.asin,
-                row.title,
+                // Product title is hidden from the grid to keep rows compact;
+                // hover the ASIN to see the full title as a native tooltip.
+                <span
+                  key={`${row.asin}-asin`}
+                  title={row.title}
+                  className="cursor-help font-mono text-[12px] font-semibold tracking-tight text-[var(--ink-900)] underline decoration-dotted decoration-[var(--ink-600)] underline-offset-[3px]"
+                >
+                  {row.asin}
+                </span>,
                 <ToneBadge key={`${row.asin}-risk`} tone={row.severity}>{row.risk}</ToneBadge>,
                 row.stockPosition,
                 row.suppressionState,
