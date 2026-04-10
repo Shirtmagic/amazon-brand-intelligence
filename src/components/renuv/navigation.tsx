@@ -44,7 +44,7 @@ function getNavSections(brand?: string): NavSection[] {
         { label: 'Competitor Intelligence', href: internalRoute(brand, 'competitors') },
         { label: 'Traffic & Conversion', href: internalRoute(brand, 'traffic-conversion') },
         { label: 'ASIN Performance', href: internalRoute(brand, 'asins') },
-        { label: 'Retail Health', href: internalRoute(brand, 'retail-health') },
+        { label: 'Inventory', href: internalRoute(brand, 'retail-health') },
         { label: 'Notes & Actions', href: internalRoute(brand, 'notes') },
         { label: 'Data Freshness', href: internalRoute(brand, 'freshness') }
       ]
@@ -58,7 +58,7 @@ function getNavSections(brand?: string): NavSection[] {
         { label: 'Advertising', href: clientRoute(brand, 'advertising') },
         { label: 'Search', href: clientRoute(brand, 'search') },
         { label: 'Recommendations', href: clientRoute(brand, 'recommendations') },
-        { label: 'Retail Health', href: clientRoute(brand, 'retail-health') }
+        { label: 'Inventory', href: clientRoute(brand, 'retail-health') }
       ]
     }
   ];

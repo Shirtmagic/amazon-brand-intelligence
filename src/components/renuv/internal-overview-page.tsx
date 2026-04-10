@@ -81,7 +81,7 @@ export function RenuvInternalOverviewPage({ snapshot, brand }: { snapshot: Renuv
                   ASIN performance <ArrowUpRight size={15} />
                 </Link>
                 <Link href={internalRoute(brand, "retail-health")} className="mc-btn mc-btn-secondary">
-                  Retail health <ArrowUpRight size={15} />
+                  Inventory <ArrowUpRight size={15} />
                 </Link>
                 <Link href={internalRoute(brand, "notes")} className="mc-btn mc-btn-secondary">
                   Notes &amp; actions <ArrowUpRight size={15} />
@@ -300,7 +300,7 @@ export function RenuvInternalOverviewPage({ snapshot, brand }: { snapshot: Renuv
             <NavCard href={internalRoute(brand, "advertising")} label="Advertising" description="Campaign efficiency and spend analysis" />
             <NavCard href={internalRoute(brand, "traffic-conversion")} label="Traffic &amp; conversion" description="Session quality and CVR diagnostics" />
             <NavCard href={internalRoute(brand, "asins")} label="ASIN performance" description="Ranked product-level analysis" />
-            <NavCard href={internalRoute(brand, "retail-health")} label="Retail health" description="Stock, listing health, and pricing risk" />
+            <NavCard href={internalRoute(brand, "retail-health")} label="Inventory" description="Stock levels, days of supply, and inbound pipeline" />
           </div>
         </section>
       </div>

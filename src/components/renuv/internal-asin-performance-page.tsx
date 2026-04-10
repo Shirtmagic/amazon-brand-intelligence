@@ -258,7 +258,7 @@ export function RenuvInternalAsinPerformancePage({ snapshot, brand }: { snapshot
                 Advertising <ArrowUpRight size={15} />
               </Link>
               <Link href={internalRoute(brand, "retail-health")} className="mc-btn mc-btn-secondary">
-                Retail health <ArrowUpRight size={15} />
+                Inventory <ArrowUpRight size={15} />
               </Link>
               <Link href={brandRoot(brand)} className="mc-btn mc-btn-primary">
                 Mission Control <ArrowUpRight size={15} />

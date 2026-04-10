@@ -62,8 +62,44 @@ function skuStatus(dos: number): 'healthy' | 'warning' | 'critical' {
   return 'healthy';
 }
 
+interface AsinVelocityRow {
+  asin: string;
+  d7_units: number;
+  d30_units: number;
+  d60_units: number;
+  d90_units: number;
+}
+
 export async function fetchRetailHealthSnapshot(): Promise<RetailHealthSnapshot> {
   try {
+    // Per-ASIN units ordered across rolling 7/30/60/90 day windows.
+    // We compute totals and divide by the window length to derive a true
+    // average daily sales rate used for days-of-supply calculation in the UI.
+    const velocitySql = `
+      SELECT
+        asin,
+        SUM(IF(date_day >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY), units_ordered, 0)) AS d7_units,
+        SUM(IF(date_day >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY), units_ordered, 0)) AS d30_units,
+        SUM(IF(date_day >= DATE_SUB(CURRENT_DATE(), INTERVAL 60 DAY), units_ordered, 0)) AS d60_units,
+        SUM(IF(date_day >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY), units_ordered, 0)) AS d90_units
+      FROM \`renuv-amazon-data-warehouse.core_amazon.fact_sales_traffic_daily\`
+      WHERE brand_key = 'renuv'
+        AND marketplace_key = 'US'
+        AND date_day >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
+      GROUP BY asin
+    `;
+
+    const velocityRows = await queryBigQuery<AsinVelocityRow>(velocitySql);
+    const velocityByAsin = new Map<string, { d7: number; d30: number; d60: number; d90: number }>();
+    for (const v of velocityRows) {
+      velocityByAsin.set(v.asin, {
+        d7: Number(v.d7_units || 0) / 7,
+        d30: Number(v.d30_units || 0) / 30,
+        d60: Number(v.d60_units || 0) / 60,
+        d90: Number(v.d90_units || 0) / 90,
+      });
+    }
+
     const inventoryRows = await queryBigQuery<InventoryHealthRow>(`
       SELECT
         asin, sku, product_name,
@@ -205,15 +241,25 @@ export async function fetchRetailHealthSnapshot(): Promise<RetailHealthSnapshot>
     ];
 
     // Per-SKU inventory status
-    const inventoryStatus: InventoryStatus[] = inventoryRows.map(r => ({
-      sku: r.sku,
-      name: r.product_name || r.asin,
-      unitsAvailable: Number(r.available),
-      daysOfSupply: Number(r.days_of_supply),
-      status: skuStatus(Number(r.days_of_supply)),
-      inboundQty: Number(r.inbound_quantity),
-      inboundEta: null,
-    }));
+    const inventoryStatus: InventoryStatus[] = inventoryRows.map(r => {
+      const velocity = velocityByAsin.get(r.asin) || { d7: 0, d30: 0, d60: 0, d90: 0 };
+      return {
+        sku: r.sku,
+        name: r.product_name || r.asin,
+        asin: r.asin,
+        unitsAvailable: Number(r.available),
+        daysOfSupply: Number(r.days_of_supply),
+        status: skuStatus(Number(r.days_of_supply)),
+        inboundQty: Number(r.inbound_quantity),
+        inboundEta: null,
+        avgDailyByWindow: {
+          d7: Number(velocity.d7.toFixed(2)),
+          d30: Number(velocity.d30.toFixed(2)),
+          d60: Number(velocity.d60.toFixed(2)),
+          d90: Number(velocity.d90.toFixed(2)),
+        },
+      };
+    });
 
     // Operational statuses
     const operationalStatuses: OperationalStatus[] = [

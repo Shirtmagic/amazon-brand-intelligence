@@ -55,7 +55,7 @@ export function RenuvInternalAdvertisingPage({ snapshot, brand }: { snapshot: Ad
                   Cross-check ASIN performance <ArrowUpRight size={15} />
                 </Link>
                 <Link href={internalRoute(brand, "retail-health")} className="mc-btn mc-btn-secondary">
-                  Cross-check retail health <ArrowUpRight size={15} />
+                  Cross-check inventory <ArrowUpRight size={15} />
                 </Link>
               </div>
             </div>
@@ -288,7 +288,7 @@ export function RenuvInternalAdvertisingPage({ snapshot, brand }: { snapshot: Ad
                 ASIN performance <ArrowUpRight size={15} />
               </Link>
               <Link href={internalRoute(brand, "retail-health")} className="mc-btn mc-btn-secondary">
-                Retail health <ArrowUpRight size={15} />
+                Inventory <ArrowUpRight size={15} />
               </Link>
               <Link href={brandRoot(brand)} className="mc-btn mc-btn-primary">
                 Mission Control <ArrowUpRight size={15} />

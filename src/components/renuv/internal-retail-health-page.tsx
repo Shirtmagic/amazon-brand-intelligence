@@ -25,14 +25,14 @@ export function RenuvInternalRetailHealthPage({ snapshot, brand }: { snapshot: R
                   <ArrowLeft size={14} /> Back to Renuv overview
                 </Link>
                 <Badge tone="navy">Internal workspace</Badge>
-                <Badge tone="blue">Retail health</Badge>
+                <Badge tone="blue">Inventory</Badge>
                 <Badge tone="soft">{snapshot.periodLabel}</Badge>
               </div>
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[var(--blue-700)]">Amazon intelligence</p>
                 <h1 className="mt-3 max-w-4xl text-2xl font-semibold tracking-[-0.04em] text-[var(--ink-950)] md:text-4xl lg:text-6xl">
-                  Retail health · {snapshot.brand}
+                  Inventory · {snapshot.brand}
                 </h1>
                 <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--ink-700)] md:text-lg">
                   Inventory levels, listing health, and pricing signals across the portfolio.
@@ -48,6 +48,7 @@ export function RenuvInternalRetailHealthPage({ snapshot, brand }: { snapshot: R
                 <Link href={internalRoute(brand, "advertising")} className="mc-btn mc-btn-primary">
                   Open advertising <ArrowUpRight size={15} />
                 </Link>
+                {/* Tab renamed from "Retail Health" → "Inventory". Route stays /retail-health for stability. */}
                 <Link href={internalRoute(brand, "traffic-conversion")} className="mc-btn mc-btn-secondary">
                   Open traffic & conversion <ArrowUpRight size={15} />
                 </Link>
@@ -60,8 +61,8 @@ export function RenuvInternalRetailHealthPage({ snapshot, brand }: { snapshot: R
             <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
               <MiniSummaryCard
                 title="Primary source family"
-                value="Retail health"
-                detail="Retail health data sourced from reporting_amazon.retail_health_daily with freshness labels per block."
+                value="Inventory health"
+                detail="FBA inventory metrics sourced from ops_amazon.sp_fba_manage_inventory_health_v24 with freshness labels per block."
                 icon={<Database size={18} />}
               />
               <MiniSummaryCard

@@ -12,11 +12,23 @@ export type RetailHealthKpi = {
 export type InventoryStatus = {
   sku: string;
   name: string;
+  asin: string;
   unitsAvailable: number;
+  /** Days of supply reported by the source inventory health table (Amazon's default). */
   daysOfSupply: number;
   status: 'healthy' | 'warning' | 'critical';
   inboundQty: number;
   inboundEta: string | null;
+  /**
+   * Average daily units sold computed from fact_sales_traffic_daily for each rolling
+   * window, so the UI can recompute days of supply = unitsAvailable / avgDaily[window].
+   */
+  avgDailyByWindow: {
+    d7: number;
+    d30: number;
+    d60: number;
+    d90: number;
+  };
 };
 
 export type OperationalStatus = {
@@ -153,38 +165,46 @@ export const renuvRetailHealthMock: RetailHealthSnapshot = {
     {
       sku: 'RENUV-001',
       name: 'Renuv Advanced Scar Gel - 30ml',
+      asin: 'B0MOCK0001',
       unitsAvailable: 2847,
       daysOfSupply: 48,
       status: 'healthy',
       inboundQty: 1500,
-      inboundEta: '2026-04-15'
+      inboundEta: '2026-04-15',
+      avgDailyByWindow: { d7: 62, d30: 59, d60: 57, d90: 55 }
     },
     {
       sku: 'RENUV-002',
       name: 'Renuv Scar Treatment - 50ml Bundle',
+      asin: 'B0MOCK0002',
       unitsAvailable: 1924,
       daysOfSupply: 52,
       status: 'healthy',
       inboundQty: 1000,
-      inboundEta: '2026-04-15'
+      inboundEta: '2026-04-15',
+      avgDailyByWindow: { d7: 38, d30: 37, d60: 36, d90: 35 }
     },
     {
       sku: 'RENUV-003',
       name: 'Renuv Post-Surgery Kit',
+      asin: 'B0MOCK0003',
       unitsAvailable: 218,
       daysOfSupply: 12,
       status: 'warning',
       inboundQty: 500,
-      inboundEta: '2026-04-08'
+      inboundEta: '2026-04-08',
+      avgDailyByWindow: { d7: 22, d30: 18, d60: 16, d90: 15 }
     },
     {
       sku: 'RENUV-004',
       name: 'Renuv 3-Pack Value Set',
+      asin: 'B0MOCK0004',
       unitsAvailable: 892,
       daysOfSupply: 38,
       status: 'healthy',
       inboundQty: 600,
-      inboundEta: '2026-04-15'
+      inboundEta: '2026-04-15',
+      avgDailyByWindow: { d7: 26, d30: 23, d60: 22, d90: 21 }
     }
   ],
   commentary: 'Retail health metrics remain strong overall with Buy Box ownership at 98.7% and minimal competitive pressure on core SKUs. Inventory health declined slightly from last period (87/100 vs 92/100) due to one secondary SKU (RENUV-003 Post-Surgery Kit) showing elevated velocity relative to stock levels. This SKU has approximately 12 days of supply at current run rate with inbound shipment confirmed for April 8. All other SKUs maintain healthy 38-52 day supply buffers. Review performance continues to strengthen with average rating improving to 4.6 stars and positive review acquisition pace (+127 reviews this period). Content quality score remains excellent at 94/100 with optimized A+ content, image galleries, and product descriptions. Suppression rate at 0.2% indicates strong compliance and listing health. The one area requiring attention is RENUV-003 inventory runway — if inbound shipment delays or demand accelerates, stockout risk becomes material within two weeks. All other indicators suggest strong retail fundamentals supporting continued growth.',

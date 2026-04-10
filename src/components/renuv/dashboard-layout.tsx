@@ -99,7 +99,7 @@ function formatSegmentLabel(segment: string): string {
     'renuv': 'Renuv',
     'asins': 'ASIN Performance',
     'traffic-conversion': 'Traffic & Conversion',
-    'retail-health': 'Retail Health',
+    'retail-health': 'Inventory',
     'advertising': 'Advertising',
     'search': 'Search',
     'alerts': 'Alerts',
